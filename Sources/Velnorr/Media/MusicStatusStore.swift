@@ -258,6 +258,8 @@ final class MusicStatusStore: ObservableObject {
     }
 
     if shouldUpdateStatus {
+      // A playing same-track refresh can contain a stale provider position.
+      // Preserve the local timeline anchor so UI recreation cannot rewind it.
       let elapsed = sameTrack && status.isPlaying && resolvedIsPlaying
         ? expectedElapsed
         : snapshot.elapsed
