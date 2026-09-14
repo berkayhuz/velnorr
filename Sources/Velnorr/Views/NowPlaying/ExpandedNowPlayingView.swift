@@ -71,13 +71,17 @@ struct ExpandedNowPlayingView: View {
 
       VStack(alignment: .leading, spacing: 2) {
         Button(action: onOpenTrack) {
-          Text(status.hasTrack && !status.title.isEmpty ? status.title : "Not Playing")
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(status.hasTrack ? .white : .white.opacity(0.42))
-            .lineLimit(1)
-            .frame(maxWidth: .infinity, alignment: .leading)
+          ExpandedTrackTitle(
+            text: status.hasTrack && !status.title.isEmpty ? status.title : "Not Playing",
+            color: status.hasTrack ? .white : .white.opacity(0.42)
+          )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(
+          VelnorrButtonStyle(
+            hoverScale: 0.98,
+            pressedScale: 0.96
+          )
+        )
         .disabled(!status.hasTrack)
         .accessibilityLabel("Open song")
 
@@ -89,7 +93,12 @@ struct ExpandedNowPlayingView: View {
               .lineLimit(1)
               .frame(maxWidth: .infinity, alignment: .leading)
           }
-          .buttonStyle(.plain)
+          .buttonStyle(
+            VelnorrButtonStyle(
+              hoverScale: 0.98,
+              pressedScale: 0.96
+            )
+          )
           .disabled(status.artist.isEmpty)
           .accessibilityLabel("Open artist")
         }
@@ -236,14 +245,34 @@ struct ExpandedNowPlayingView: View {
 }
 
 private struct VelnorrButtonStyle: ButtonStyle {
+  let hoverScale: CGFloat
+  let pressedScale: CGFloat
+
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @State private var isHovered = false
+
+  init(hoverScale: CGFloat = 0.95, pressedScale: CGFloat = 0.9) {
+    self.hoverScale = hoverScale
+    self.pressedScale = pressedScale
+  }
 
   func makeBody(configuration: Configuration) -> some View {
     configuration.label
-      .scaleEffect(configuration.isPressed ? (reduceMotion ? 0.98 : 0.94) : 1)
+      .scaleEffect(
+        configuration.isPressed
+          ? pressedScale
+          : (isHovered ? hoverScale : 1)
+      )
+      .onHover { hovering in
+        isHovered = hovering
+      }
       .animation(
         reduceMotion ? .easeOut(duration: 0.1) : VelnorrAnimation.control,
         value: configuration.isPressed
+      )
+      .animation(
+        reduceMotion ? .easeOut(duration: 0.1) : VelnorrAnimation.control,
+        value: isHovered
       )
   }
 }
@@ -257,6 +286,163 @@ private struct NotPlayingIndicator: View {
           .frame(width: 3, height: 3)
       }
     }
+  }
+}
+
+private struct ExpandedTrackTitle: View {
+  let text: String
+  let color: Color
+
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @AppStorage("appearanceAnimations") private var animationsEnabled = true
+  @AppStorage("mediaMarquee") private var marqueeEnabled = true
+  @AppStorage("mediaMarqueeSpeed") private var marqueeSpeed = 25.0
+  @State private var textWidth: CGFloat = 0
+  @State private var loopStartDate: Date?
+  @State private var hasStartedLoop = false
+  @State private var pausedElapsed: TimeInterval = 0
+  @State private var loopTask: Task<Void, Never>?
+  @State private var isHovered = false
+
+  private let loopSpacing: CGFloat = 28
+  private let loopDelay: Duration = .seconds(1.5)
+
+  var body: some View {
+    GeometryReader { geometry in
+      if shouldLoop && !isHovered && textWidth > geometry.size.width,
+        let loopStartDate
+      {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+          let elapsed = pausedElapsed + max(
+            0,
+            timeline.date.timeIntervalSince(loopStartDate)
+          )
+          let travel = max(1, textWidth + loopSpacing)
+          let offset = -CGFloat(elapsed * marqueeSpeed)
+            .truncatingRemainder(dividingBy: travel)
+
+          HStack(spacing: loopSpacing) {
+            measuredTitle
+            titleLabel
+          }
+          .offset(x: offset)
+          .frame(minWidth: geometry.size.width, alignment: .leading)
+        }
+      } else {
+        truncatedTitleLabel
+          .frame(width: geometry.size.width, alignment: .leading)
+      }
+    }
+    .frame(height: 18)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .background(alignment: .leading) {
+      measuredTitle
+        .opacity(0)
+        .allowsHitTesting(false)
+    }
+    .clipped()
+    .onHover { hovering in
+      updateHoverState(hovering)
+    }
+    .onPreferenceChange(ExpandedTrackTitleWidthKey.self) { width in
+      textWidth = width
+    }
+    .onAppear {
+      scheduleLoop()
+    }
+    .onChange(of: text) { _ in
+      scheduleLoop()
+    }
+    .onChange(of: marqueeEnabled) { _ in
+      scheduleLoop()
+    }
+    .onChange(of: motionReduced) { _ in
+      scheduleLoop()
+    }
+    .onDisappear {
+      loopTask?.cancel()
+      loopTask = nil
+    }
+  }
+
+  private var shouldLoop: Bool {
+    marqueeEnabled && !motionReduced && hasStartedLoop && loopStartDate != nil
+  }
+
+  private var motionReduced: Bool {
+    reduceMotion || !animationsEnabled
+  }
+
+  private var titleLabel: some View {
+    Text(text)
+      .font(.system(size: 15, weight: .semibold))
+      .foregroundStyle(color)
+      .lineLimit(1)
+      .fixedSize(horizontal: true, vertical: false)
+  }
+
+  private var truncatedTitleLabel: some View {
+    Text(text)
+      .font(.system(size: 15, weight: .semibold))
+      .foregroundStyle(color)
+      .lineLimit(1)
+      .truncationMode(.tail)
+  }
+
+  private var measuredTitle: some View {
+    titleLabel
+      .background {
+        GeometryReader { geometry in
+          Color.clear.preference(
+            key: ExpandedTrackTitleWidthKey.self,
+            value: geometry.size.width
+          )
+        }
+      }
+  }
+
+  private func updateHoverState(_ hovering: Bool) {
+    guard isHovered != hovering else { return }
+    isHovered = hovering
+
+    guard hasStartedLoop else { return }
+
+    if hovering {
+      if let loopStartDate {
+        pausedElapsed += max(0, Date().timeIntervalSince(loopStartDate))
+        self.loopStartDate = nil
+      }
+    } else if loopStartDate == nil {
+      loopStartDate = Date()
+    }
+  }
+
+  private func scheduleLoop() {
+    loopTask?.cancel()
+    loopTask = nil
+    loopStartDate = nil
+    hasStartedLoop = false
+    pausedElapsed = 0
+
+    guard marqueeEnabled, !motionReduced else { return }
+
+    loopTask = Task { @MainActor in
+      try? await Task.sleep(for: loopDelay)
+      guard !Task.isCancelled, marqueeEnabled, !motionReduced else { return }
+      hasStartedLoop = true
+      if !isHovered {
+        loopStartDate = Date()
+      }
+      loopTask = nil
+    }
+  }
+}
+
+private struct ExpandedTrackTitleWidthKey: PreferenceKey {
+  static let defaultValue: CGFloat = 0
+
+  static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+    value = max(value, nextValue())
   }
 }
 
@@ -317,13 +503,7 @@ private struct ExpandedPlaybackProgress: View {
   }
 
   private func currentElapsed(at date: Date) -> TimeInterval {
-    let liveElapsed =
-      status.elapsed
-      + (status.isPlaying
-        ? date.timeIntervalSince(status.playbackUpdatedAt)
-        : 0)
-    guard status.duration > 0 else { return max(0, liveElapsed) }
-    return min(status.duration, max(0, liveElapsed))
+    status.currentElapsed(at: date)
   }
 
   private func format(_ seconds: TimeInterval) -> String {

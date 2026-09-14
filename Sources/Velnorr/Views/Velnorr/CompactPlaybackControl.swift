@@ -87,6 +87,7 @@ struct CompactPlaybackControl: View {
       }
       .frame(width: 20, height: 20)
       .contentShape(Rectangle())
+      .scaleEffect(status.isPlaying && isPressed ? 0.95 : 1)
     }
     .buttonStyle(.plain)
     .onHover(perform: onHover)
