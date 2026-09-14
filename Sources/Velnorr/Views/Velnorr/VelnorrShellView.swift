@@ -4,6 +4,7 @@ import SwiftUI
 
 struct VelnorrShellView: View {
   let metrics: NotchMetrics
+  let runtime: VelnorrRuntime
   let onLayoutChange: ((CGRect, CGFloat, CGFloat) -> Void)?
   let onMediaExpandedChange: ((Bool) -> Void)?
   let onCapsLockVisibilityChange: ((Bool) -> Void)?
@@ -42,18 +43,38 @@ struct VelnorrShellView: View {
   @AppStorage("brightnessBarColor") private var brightnessBarColor = "white"
   @AppStorage("volumeBarHeight") private var volumeBarHeight = 5.0
   @AppStorage("brightnessBarHeight") private var brightnessBarHeight = 5.0
-  @StateObject private var music = MusicStatusStore()
-  @StateObject private var audioVolume = AudioVolumeStore()
-  @StateObject private var screenBrightness = ScreenBrightnessStore()
-  @StateObject private var capsLock = CapsLockStore()
-  @StateObject private var batteryCharge = BatteryChargeStore()
-  @StateObject private var bluetoothConnection = BluetoothConnectionStore()
+  @ObservedObject private var music: MusicStatusStore
+  @ObservedObject private var audioVolume: AudioVolumeStore
+  @ObservedObject private var screenBrightness: ScreenBrightnessStore
+  @ObservedObject private var capsLock: CapsLockStore
+  @ObservedObject private var batteryCharge: BatteryChargeStore
+  @ObservedObject private var bluetoothConnection: BluetoothConnectionStore
   @State private var interaction = VelnorrInteractionState()
   @State private var isAutomaticTrackPeekVisible = false
   @State private var observedTrackKey = ""
   @State private var automaticTrackPeekTask: Task<Void, Never>?
   @State private var hoverGeneration = 0
   @State private var leftHoverGeneration = 0
+
+  init(
+    metrics: NotchMetrics,
+    runtime: VelnorrRuntime,
+    onLayoutChange: ((CGRect, CGFloat, CGFloat) -> Void)?,
+    onMediaExpandedChange: ((Bool) -> Void)?,
+    onCapsLockVisibilityChange: ((Bool) -> Void)?
+  ) {
+    self.metrics = metrics
+    self.runtime = runtime
+    self.onLayoutChange = onLayoutChange
+    self.onMediaExpandedChange = onMediaExpandedChange
+    self.onCapsLockVisibilityChange = onCapsLockVisibilityChange
+    _music = ObservedObject(wrappedValue: runtime.music)
+    _audioVolume = ObservedObject(wrappedValue: runtime.audioVolume)
+    _screenBrightness = ObservedObject(wrappedValue: runtime.screenBrightness)
+    _capsLock = ObservedObject(wrappedValue: runtime.capsLock)
+    _batteryCharge = ObservedObject(wrappedValue: runtime.batteryCharge)
+    _bluetoothConnection = ObservedObject(wrappedValue: runtime.bluetoothConnection)
+  }
 
   var body: some View {
     let trackDetailsVisible = interaction.isArtworkHovered
@@ -557,13 +578,6 @@ struct VelnorrShellView: View {
       // MARK: - Initial Setup
 
       .onAppear {
-
-        music.start()
-        audioVolume.start()
-        screenBrightness.start()
-        capsLock.start()
-        batteryCharge.start()
-        bluetoothConnection.start()
         onMediaExpandedChange?(interaction.isMediaExpanded)
         onCapsLockVisibilityChange?(capsLockHUDEnabled && capsLock.isVisible)
 
@@ -581,12 +595,6 @@ struct VelnorrShellView: View {
         onCapsLockVisibilityChange?(false)
         automaticTrackPeekTask?.cancel()
         automaticTrackPeekTask = nil
-        music.stop()
-        audioVolume.stop()
-        screenBrightness.stop()
-        capsLock.stop()
-        batteryCharge.stop()
-        bluetoothConnection.stop()
       }
 
       .onChange(of: interaction.isMediaExpanded) { expanded in

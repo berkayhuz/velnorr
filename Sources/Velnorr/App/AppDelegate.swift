@@ -5,6 +5,7 @@ import SwiftUI
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+  private let runtime = VelnorrRuntime()
   private var velnorrWindows: [VelnorrWindow] = []
   private var screenObserver: NSObjectProtocol?
   private var activeSpaceObserver: NSObjectProtocol?
@@ -21,6 +22,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     applyLaunchAtLogin(appliedSettings?.launchAtLogin ?? true)
     NSApp.setActivationPolicy(.accessory)
     terminateOtherInstances()
+    runtime.start()
     rebuildVelnorrs()
 
     if UserDefaults.standard.string(forKey: AppSettings.onboardingCompletedVersion)
@@ -106,6 +108,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   func applicationWillTerminate(_ notification: Notification) {
+    runtime.stop()
     if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
     if let activeSpaceObserver {
       NSWorkspace.shared.notificationCenter.removeObserver(activeSpaceObserver)
@@ -258,7 +261,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       let window = VelnorrWindow(
         screen: screen,
         configuredMode: hasPhysicalNotch ? settings.externalDisplayMode : .pill,
-        isFloating: !hasPhysicalNotch
+        isFloating: !hasPhysicalNotch,
+        runtime: runtime
       )
       velnorrWindows.append(window)
       window.orderFrontRegardless()
@@ -286,7 +290,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       let window = VelnorrWindow(
         screen: screen,
         configuredMode: hasPhysicalNotch ? settings.externalDisplayMode : .pill,
-        isFloating: !hasPhysicalNotch
+        isFloating: !hasPhysicalNotch,
+        runtime: runtime
       )
       velnorrWindows.append(window)
       window.orderFrontRegardless()

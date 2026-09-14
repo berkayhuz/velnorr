@@ -15,7 +15,14 @@ final class ScreenBrightnessStore: ObservableObject {
   private var eventTapRetryTask: Task<Void, Never>?
   private var brightnessObserver: NSObjectProtocol?
 
-  init() {
+  func start() {
+    installBrightnessObserverIfNeeded()
+    brightness = displayController.read() ?? brightness
+    startEventTapWithRetry()
+  }
+
+  private func installBrightnessObserverIfNeeded() {
+    guard brightnessObserver == nil else { return }
     brightnessObserver = NotificationCenter.default.addObserver(
       forName: .velnorrBrightnessChanged,
       object: nil,
@@ -26,11 +33,6 @@ final class ScreenBrightnessStore: ObservableObject {
         self?.receive(brightness: value)
       }
     }
-  }
-
-  func start() {
-    brightness = displayController.read() ?? brightness
-    startEventTapWithRetry()
   }
 
   func stop() {

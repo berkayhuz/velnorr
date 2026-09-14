@@ -33,7 +33,12 @@ final class VelnorrWindow: NSWindow {
   private let displayMode: VelnorrDisplayMode
   private let displayID: CGDirectDisplayID
 
-  init(screen: NSScreen, configuredMode: VelnorrDisplayMode, isFloating: Bool = false) {
+  init(
+    screen: NSScreen,
+    configuredMode: VelnorrDisplayMode,
+    isFloating: Bool = false,
+    runtime: VelnorrRuntime
+  ) {
     let metrics = NotchMetrics(screen: screen, configuredMode: configuredMode)
     let horizontalOffset = UserDefaults.standard.double(forKey: AppSettings.horizontalOffset)
     let verticalOffset = UserDefaults.standard.double(forKey: AppSettings.verticalOffset)
@@ -77,6 +82,7 @@ final class VelnorrWindow: NSWindow {
     let hostingView = PassthroughHostingView(
       rootView: VelnorrShellView(
         metrics: metrics,
+        runtime: runtime,
         onLayoutChange: { [weak self] rect, radius, bottomRadius in
           self?.updateHitRegion(
             rect: rect,
