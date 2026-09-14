@@ -88,25 +88,25 @@ struct VelnorrOnboardingView: View {
   }
 
   private var header: some View {
-    VStack(alignment: .leading, spacing: 18) {
-      HStack(alignment: .center, spacing: 34) {
+    VStack(alignment: .center, spacing: 14) {
+      HStack(alignment: .center, spacing: 16) {
         brandLogo
 
         Text("Velnorr")
-          .font(.system(size: 56, weight: .regular, design: .default))
+          .font(.system(size: 30, weight: .regular, design: .default))
           .foregroundStyle(.primary)
           .lineLimit(1)
       }
 
       Text(L("Your Dynamic Island for macOS"))
-        .font(.system(size: 28, weight: .regular, design: .default))
+        .font(.system(size: 16, weight: .regular, design: .default))
         .foregroundStyle(.secondary)
         .lineLimit(2)
         .fixedSize(horizontal: false, vertical: true)
     }
-    .frame(maxWidth: .infinity, alignment: .leading)
-    .padding(.horizontal, 34)
-    .padding(.vertical, 30)
+    .frame(maxWidth: .infinity, alignment: .center)
+    .padding(.horizontal, 32)
+    .padding(.vertical, 36)
     .background(Color(nsColor: .windowBackgroundColor))
   }
 
@@ -126,8 +126,8 @@ struct VelnorrOnboardingView: View {
           .background(.white)
       }
     }
-    .frame(width: 144, height: 144)
-    .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
+    .frame(width: 50, height: 50)
+    .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
   }
 
   private var introduction: some View {
