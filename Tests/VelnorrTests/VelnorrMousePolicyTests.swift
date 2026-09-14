@@ -50,4 +50,26 @@ final class VelnorrMousePolicyTests: XCTestCase {
       )
     )
   }
+
+  func testExpandedMediaAutoDismissesOnlyAfterPointerLeaves() {
+    XCTAssertEqual(VelnorrMousePolicy.mediaAutoDismissDelay, 3)
+    XCTAssertTrue(
+      VelnorrMousePolicy.shouldAutoDismissMedia(
+        isMediaExpanded: true,
+        pointerInsideMedia: false
+      )
+    )
+    XCTAssertFalse(
+      VelnorrMousePolicy.shouldAutoDismissMedia(
+        isMediaExpanded: true,
+        pointerInsideMedia: true
+      )
+    )
+    XCTAssertFalse(
+      VelnorrMousePolicy.shouldAutoDismissMedia(
+        isMediaExpanded: false,
+        pointerInsideMedia: false
+      )
+    )
+  }
 }

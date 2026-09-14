@@ -25,6 +25,15 @@ struct ConnectedAppleDevice: Equatable, Sendable {
   let name: String
   let kind: ConnectedAppleDeviceKind
   let batteryPercentage: Int?
+
+  var symbolName: String {
+    guard kind == .speaker else { return kind.symbolName }
+    let normalizedName = name.folding(
+      options: [.caseInsensitive, .diacriticInsensitive],
+      locale: .current
+    )
+    return normalizedName.contains("beats") ? "beats.headphones" : kind.symbolName
+  }
 }
 
 @MainActor
@@ -212,7 +221,7 @@ final class BluetoothConnectionStore: NSObject, ObservableObject {
     return UserDefaults.standard.object(forKey: key) as? Bool ?? true
   }
 
-  nonisolated private static func kind(for name: String, classOfDevice: UInt32)
+  nonisolated static func kind(for name: String, classOfDevice: UInt32)
     -> ConnectedAppleDeviceKind?
   {
     let normalizedName = name.folding(
@@ -243,6 +252,16 @@ final class BluetoothConnectionStore: NSObject, ObservableObject {
       return .mouse
     }
     if Self.isLogitechMouse(normalizedName) { return .mouse }
+    if normalizedName.contains("beats")
+      || normalizedName.contains("bose")
+      || normalizedName.contains("jbl")
+      || normalizedName.contains("sonos")
+      || normalizedName.contains("soundlink")
+      || normalizedName.contains("homepod")
+      || normalizedName.contains("speaker")
+    {
+      return .speaker
+    }
     let majorClass = (classOfDevice >> 8) & 0x1F
     let peripheralMinor = classOfDevice & 0xC0
     if majorClass == 0x05 {

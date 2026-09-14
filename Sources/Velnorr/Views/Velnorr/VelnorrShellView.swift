@@ -38,6 +38,7 @@ struct VelnorrShellView: View {
   @AppStorage("brightnessBarWidth") private var brightnessBarWidth = 52.0
   @AppStorage("volumeIconSize") private var volumeIconSize = 13.0
   @AppStorage("brightnessIconSize") private var brightnessIconSize = 13.0
+  @AppStorage(AppSettings.capsLockHUDSize) private var capsLockHUDSize = 38.0
   @AppStorage("batteryIconWidth") private var batteryIconWidth = 28.0
   @AppStorage("volumeBarColor") private var volumeBarColor = "white"
   @AppStorage("brightnessBarColor") private var brightnessBarColor = "white"
@@ -55,6 +56,8 @@ struct VelnorrShellView: View {
   @State private var automaticTrackPeekTask: Task<Void, Never>?
   @State private var hoverGeneration = 0
   @State private var leftHoverGeneration = 0
+  @State private var isPointerInsideMedia = false
+  @State private var mediaDismissTask: Task<Void, Never>?
 
   init(
     metrics: NotchMetrics,
@@ -173,14 +176,17 @@ struct VelnorrShellView: View {
                 status: music.status,
 
                 onOpenSource: {
+                  noteMediaActivity()
                   music.openSource()
                 },
 
                 onOpenTrack: {
+                  noteMediaActivity()
                   music.openCurrentTrack()
                 },
 
                 onOpenArtist: {
+                  noteMediaActivity()
                   music.openCurrentArtist()
                 },
 
@@ -209,6 +215,7 @@ struct VelnorrShellView: View {
                 },
 
                 onAudioOutput: {
+                  noteMediaActivity()
                   music.openAudioOutputSettings()
                 },
 
@@ -455,7 +462,8 @@ struct VelnorrShellView: View {
           isEnabled: capsLock.isEnabled,
           isVisible: capsLockHUDEnabled && capsLock.isVisible,
           surfaceColor: velnorrColor.opacity(velnorrOpacity),
-          reduceMotion: reduceMotion || !animationsEnabled
+          reduceMotion: reduceMotion || !animationsEnabled,
+          diameter: CapsLockHUDMetrics.diameter(from: capsLockHUDSize)
         )
         .offset(y: layout.height)
       }
@@ -561,11 +569,13 @@ struct VelnorrShellView: View {
           return
         }
 
-        if inside {
+        if interaction.isMediaExpanded {
+          handleMediaPointer(inside)
+        } else if inside {
 
           handleOuterHover(true)
 
-        } else if !interaction.isMediaExpanded {
+        } else {
 
           handleArtworkHover(false)
           handleOuterHover(false)
@@ -602,14 +612,19 @@ struct VelnorrShellView: View {
         onCapsLockVisibilityChange?(false)
         automaticTrackPeekTask?.cancel()
         automaticTrackPeekTask = nil
+        cancelMediaAutoDismiss()
+        isPointerInsideMedia = false
       }
 
       .onChange(of: interaction.isMediaExpanded) { expanded in
+        isPointerInsideMedia = expanded
         onMediaExpandedChange?(expanded)
         if expanded {
           automaticTrackPeekTask?.cancel()
           automaticTrackPeekTask = nil
           isAutomaticTrackPeekVisible = false
+        } else {
+          cancelMediaAutoDismiss()
         }
       }
 
@@ -623,6 +638,10 @@ struct VelnorrShellView: View {
 
       .onChange(of: capsLockHUDEnabled) { enabled in
         onCapsLockVisibilityChange?(enabled && capsLock.isVisible)
+      }
+
+      .onChange(of: capsLockHUDSize) { _ in
+        onCapsLockVisibilityChange?(capsLockHUDEnabled && capsLock.isVisible)
       }
 
       .onChange(of: music.status.trackKey) { trackKey in
@@ -753,6 +772,11 @@ struct VelnorrShellView: View {
   }
 
   private func handleOuterHover(_ hovering: Bool) {
+    if interaction.isMediaExpanded {
+      handleMediaPointer(hovering)
+      return
+    }
+
     guard expandOnHover else { return }
     hoverGeneration += 1
     let generation = hoverGeneration
@@ -822,6 +846,7 @@ struct VelnorrShellView: View {
   }
 
   private func togglePlayback(collapseAfterPause: Bool) {
+    noteMediaActivity()
     let wasPlaying = music.status.isPlaying
     let shouldPlay = !wasPlaying
 
@@ -842,11 +867,73 @@ struct VelnorrShellView: View {
   }
 
   private func performSourceAction(_ action: PlaybackAction) {
+    noteMediaActivity()
     music.perform(action)
   }
 
   private func seek(to seconds: TimeInterval) {
+    noteMediaActivity()
     music.seek(to: seconds)
+  }
+
+  private func handleMediaPointer(_ inside: Bool) {
+    guard interaction.isMediaExpanded else { return }
+    isPointerInsideMedia = inside
+
+    if inside {
+      cancelMediaAutoDismiss()
+    } else {
+      scheduleMediaAutoDismiss()
+    }
+  }
+
+  private func noteMediaActivity() {
+    guard interaction.isMediaExpanded else { return }
+    if VelnorrMousePolicy.shouldAutoDismissMedia(
+      isMediaExpanded: true,
+      pointerInsideMedia: isPointerInsideMedia
+    ) {
+      scheduleMediaAutoDismiss()
+    } else {
+      cancelMediaAutoDismiss()
+    }
+  }
+
+  private func scheduleMediaAutoDismiss() {
+    guard VelnorrMousePolicy.shouldAutoDismissMedia(
+      isMediaExpanded: interaction.isMediaExpanded,
+      pointerInsideMedia: isPointerInsideMedia
+    ) else {
+      cancelMediaAutoDismiss()
+      return
+    }
+
+    mediaDismissTask?.cancel()
+    mediaDismissTask = Task { @MainActor in
+      try? await Task.sleep(
+        for: .seconds(VelnorrMousePolicy.mediaAutoDismissDelay)
+      )
+      guard !Task.isCancelled,
+        VelnorrMousePolicy.shouldAutoDismissMedia(
+          isMediaExpanded: interaction.isMediaExpanded,
+          pointerInsideMedia: isPointerInsideMedia
+        )
+      else { return }
+
+      withAnimation(
+        animationsEnabled
+          ? VelnorrAnimation.surface(reduceMotion: reduceMotion)
+          : .easeOut(duration: 0.12)
+      ) {
+        interaction.dismiss()
+      }
+      mediaDismissTask = nil
+    }
+  }
+
+  private func cancelMediaAutoDismiss() {
+    mediaDismissTask?.cancel()
+    mediaDismissTask = nil
   }
 
   private func workAreaRegion(

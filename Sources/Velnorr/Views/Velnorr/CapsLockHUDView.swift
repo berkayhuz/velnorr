@@ -1,5 +1,25 @@
 import SwiftUI
 
+enum CapsLockHUDMetrics {
+  static let defaultDiameter: CGFloat = 38
+  static let minimumDiameter: CGFloat = 30
+  static let maximumDiameter: CGFloat = 64
+  static let restingGap: CGFloat = 12
+
+  static func diameter(from storedValue: Double) -> CGFloat {
+    guard storedValue.isFinite, storedValue > 0 else { return defaultDiameter }
+    return min(max(CGFloat(storedValue), minimumDiameter), maximumDiameter)
+  }
+
+  static func iconSize(for diameter: CGFloat) -> CGFloat {
+    diameter * 13 / 30
+  }
+
+  static func frameWidth(for diameter: CGFloat) -> CGFloat {
+    max(46, diameter + 16)
+  }
+}
+
 /// A detached status bubble that leaves the Velnorr surface and its layout
 /// untouched. The bubble begins partially inside the lower edge, stretches
 /// like a liquid drop, then settles with an exact 12-point gap.
@@ -8,12 +28,10 @@ struct CapsLockHUDView: View {
   let isVisible: Bool
   let surfaceColor: Color
   let reduceMotion: Bool
+  let diameter: CGFloat
 
   @State private var isSeparated = false
   @State private var isHovered = false
-
-  private let diameter: CGFloat = 30
-  private let restingGap: CGFloat = 12
 
   var body: some View {
     ZStack(alignment: .top) {
@@ -31,7 +49,12 @@ struct CapsLockHUDView: View {
         .frame(width: diameter, height: diameter)
         .overlay {
           Image(systemName: isEnabled ? "capslock.fill" : "capslock")
-            .font(.system(size: 13, weight: .semibold))
+            .font(
+              .system(
+                size: CapsLockHUDMetrics.iconSize(for: diameter),
+                weight: .semibold
+              )
+            )
             .foregroundStyle(isEnabled ? Color.green : Color.white)
             .id(isEnabled)
             .transition(.scale(scale: 0.72).combined(with: .opacity))
@@ -43,7 +66,11 @@ struct CapsLockHUDView: View {
             : 0.62,
           anchor: .top
         )
-        .offset(y: isSeparated ? restingGap : -diameter * 0.48)
+        .offset(
+          y: isSeparated
+            ? CapsLockHUDMetrics.restingGap
+            : -diameter * 0.48
+        )
         .contentShape(Circle())
         .onHover { hovering in
           guard isVisible else { return }
@@ -54,7 +81,11 @@ struct CapsLockHUDView: View {
           }
         }
     }
-    .frame(width: 46, height: restingGap + diameter, alignment: .top)
+    .frame(
+      width: CapsLockHUDMetrics.frameWidth(for: diameter),
+      height: CapsLockHUDMetrics.restingGap + diameter,
+      alignment: .top
+    )
     .opacity(isSeparated ? 1 : 0)
     .allowsHitTesting(isVisible)
     .accessibilityHidden(!isVisible)

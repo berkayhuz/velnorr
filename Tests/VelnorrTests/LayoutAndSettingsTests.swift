@@ -157,6 +157,28 @@ final class LayoutAndSettingsTests: XCTestCase {
     XCTAssertEqual(snapshot.externalDisplayMode, .simulatedNotch)
   }
 
+  func testCapsLockHUDSizeUsesLargerDefaultAndScalesIcon() {
+    let defaultDiameter = CapsLockHUDMetrics.diameter(from: 0)
+    XCTAssertEqual(defaultDiameter, 38)
+    XCTAssertEqual(CapsLockHUDMetrics.diameter(from: 48), 48)
+    XCTAssertEqual(
+      CapsLockHUDMetrics.iconSize(for: defaultDiameter),
+      13 * (38.0 / 30.0),
+      accuracy: 0.001
+    )
+  }
+
+  func testCapsLockHUDSizeClampsInvalidStoredValues() {
+    XCTAssertEqual(
+      CapsLockHUDMetrics.diameter(from: 12),
+      CapsLockHUDMetrics.minimumDiameter
+    )
+    XCTAssertEqual(
+      CapsLockHUDMetrics.diameter(from: 100),
+      CapsLockHUDMetrics.maximumDiameter
+    )
+  }
+
   func testSharedShapePathExcludesTransparentCorner() {
     let path = VelnorrShapePath.make(
       in: CGRect(x: 0, y: 0, width: 400, height: 175),

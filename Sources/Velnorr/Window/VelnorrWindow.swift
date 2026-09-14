@@ -6,11 +6,13 @@ final class VelnorrWindow: NSWindow {
   private enum MousePollingRate {
     case idle
     case nearby
+    case media
 
     var interval: TimeInterval {
       switch self {
       case .idle: 1.0 / 10.0
       case .nearby: 1.0 / 30.0
+      case .media: 1.0 / 4.0
       }
     }
 
@@ -18,6 +20,7 @@ final class VelnorrWindow: NSWindow {
       switch self {
       case .idle: 0.08
       case .nearby: 0.01
+      case .media: 0.05
       }
     }
   }
@@ -270,16 +273,22 @@ final class VelnorrWindow: NSWindow {
   }
 
   private func updateMousePolling() {
-    guard !isMediaInteractive, !hasGlobalMouseMonitor else {
+    guard !hasGlobalMouseMonitor else {
       stopMousePolling()
       return
     }
 
-    let proximityFrame = frame.insetBy(dx: -80, dy: -80)
-    let desiredRate: MousePollingRate =
-      proximityFrame.contains(NSEvent.mouseLocation)
-      ? .nearby
-      : .idle
+    let desiredRate: MousePollingRate
+    if isMediaInteractive {
+      // Expanded media must continue to observe pointer exit when the global
+      // monitor is unavailable (for example without Accessibility access).
+      desiredRate = .media
+    } else {
+      let proximityFrame = frame.insetBy(dx: -80, dy: -80)
+      desiredRate = proximityFrame.contains(NSEvent.mouseLocation)
+        ? .nearby
+        : .idle
+    }
 
     guard desiredRate != mousePollingRate || mouseTrackingTimer == nil else { return }
 
@@ -325,7 +334,7 @@ final class VelnorrWindow: NSWindow {
     }
 
     if isMediaInteractive {
-      updatePointerInsideState(true)
+      updatePointerInsideState(insideSurface)
       return
     }
 
@@ -333,8 +342,10 @@ final class VelnorrWindow: NSWindow {
   }
 
   private func containsCapsLockInteractionRegion(atScreenPoint screenPoint: NSPoint) -> Bool {
-    let diameter: CGFloat = 30
-    let restingGap: CGFloat = 12
+    let diameter = CapsLockHUDMetrics.diameter(
+      from: UserDefaults.standard.double(forKey: AppSettings.capsLockHUDSize)
+    )
+    let restingGap = CapsLockHUDMetrics.restingGap
     guard velnorrLayoutRect.maxY + restingGap + diameter <= frame.height else { return false }
 
     let windowPoint = convertPoint(fromScreen: screenPoint)

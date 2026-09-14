@@ -21,6 +21,8 @@ Velnorr brings a compact, animated status surface to macOS. It adapts to MacBook
 
 The interface stays quiet when nothing needs attention and expands naturally when you hover, interact with media, change volume or brightness, connect a device, or receive a battery event.
 
+The expanded music panel closes with an animation after three seconds of pointer-free inactivity.
+
 ## Highlights
 
 <table>
@@ -126,7 +128,7 @@ Right-click Velnorr and choose **Settings** to customize:
 - Interface language and system-default language detection
 - Animation, artwork size/radius, opacity and theme
 - Now Playing content, waveform and marquee behavior
-- Volume, brightness and Caps Lock HUD visibility, styling and timing
+- Volume, brightness and Caps Lock HUD visibility, styling, timing and size
 - Battery event types, thresholds, icon size and notification duration
 - Connected-device notification categories and timing
 - Reduced motion, diagnostics, JSON import/export and saved profiles

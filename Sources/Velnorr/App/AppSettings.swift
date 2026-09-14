@@ -12,6 +12,7 @@ enum AppSettings {
   static let onboardingCompletedVersion = "onboardingCompletedVersion"
   static let capsLockHUD = "capsLockHUD"
   static let capsLockDisplayDuration = "capsLockDisplayDuration"
+  static let capsLockHUDSize = "capsLockHUDSize"
 
   @MainActor static let defaults: [String: Any] = [
     launchAtLogin: true,
@@ -23,6 +24,7 @@ enum AppSettings {
     language: AppLanguage.system.rawValue,
     capsLockHUD: true,
     capsLockDisplayDuration: 1.6,
+    capsLockHUDSize: 38.0,
   ]
 }
 

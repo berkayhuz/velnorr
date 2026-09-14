@@ -17,7 +17,7 @@ struct DeviceConnectionHUDView: View {
   var body: some View {
     HStack(spacing: 0) {
       sideRegion(isLeft: true, width: leftSideWidth) {
-        Image(systemName: device.kind.symbolName)
+        Image(systemName: device.symbolName)
           .font(.system(size: 19, weight: .medium))
           .symbolRenderingMode(.monochrome)
           .foregroundStyle(.white.opacity(0.94))

@@ -232,7 +232,7 @@ private enum SettingsResetter {
     "volumeHUD", "brightnessHUD", "volumeBarWidth", "brightnessBarWidth", "volumeIconSize",
     "brightnessIconSize", "volumeBarColor", "brightnessBarColor", "volumeBarHeight", "brightnessBarHeight",
     "batteryIconWidth", "showOnExternalDisplays", "batteryHUD", "deviceHUD", "notificationHUD",
-    AppSettings.capsLockHUD, AppSettings.capsLockDisplayDuration,
+    AppSettings.capsLockHUD, AppSettings.capsLockDisplayDuration, AppSettings.capsLockHUDSize,
     "reduceMotionOverride", "debugLogging", "previewMode", "batteryLowThreshold", "batteryGreenThreshold",
     "batteryDisplayDuration", "volumeDisplayDuration", "brightnessDisplayDuration", "batteryShowCharging",
     "batteryShowUnplugged", "batteryShowLow", "batteryShowFull", "batteryShowThreshold", "deviceAirPods",
@@ -405,6 +405,7 @@ private struct AdditionalSettingsPage: View {
   @AppStorage("notificationHUD") private var notificationHUD = true
   @AppStorage(AppSettings.capsLockHUD) private var capsLockHUD = true
   @AppStorage(AppSettings.capsLockDisplayDuration) private var capsLockDisplayDuration = 1.6
+  @AppStorage(AppSettings.capsLockHUDSize) private var capsLockHUDSize = 38.0
   @AppStorage("reduceMotionOverride") private var reduceMotionOverride = false
   @AppStorage("debugLogging") private var debugLogging = false
   @AppStorage("previewMode") private var previewMode = false
@@ -580,6 +581,8 @@ private struct AdditionalSettingsPage: View {
         Section(L("Caps Lock HUD")) {
           Toggle(L("Show Caps Lock HUD"), isOn: $capsLockHUD)
           durationSlider(title: "Notification duration", value: $capsLockDisplayDuration)
+            .disabled(!capsLockHUD)
+          sizeSlider(title: "Icon size", value: $capsLockHUDSize, range: 30...64)
             .disabled(!capsLockHUD)
           Text(L("Velnorr consumes the Caps Lock event to suppress the macOS overlay. If Logi Options+ still shows its own overlay, disable Caps Lock notifications in Logi Options+ settings."))
             .font(.caption)
@@ -771,7 +774,11 @@ private struct AdditionalSettingsPage: View {
     }
   }
 
-  private func sizeSlider(title: String, value: Binding<Double>) -> some View {
+  private func sizeSlider(
+    title: String,
+    value: Binding<Double>,
+    range: ClosedRange<Double> = 32...90
+  ) -> some View {
     VStack(alignment: .leading, spacing: 6) {
       HStack {
         Text(AppLanguage.selected.localized(title))
@@ -780,7 +787,7 @@ private struct AdditionalSettingsPage: View {
           .foregroundStyle(.secondary)
           .monospacedDigit()
       }
-      Slider(value: value, in: 32...90, step: 1)
+      Slider(value: value, in: range, step: 1)
     }
   }
 
