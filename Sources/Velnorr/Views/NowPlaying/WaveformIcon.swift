@@ -15,7 +15,10 @@ struct WaveformIcon: View {
       bars(at: 0)
     } else {
       TimelineView(
-        .animation(minimumInterval: 1.0 / 30.0, paused: !isAnimating)
+        .animation(
+          minimumInterval: VelnorrTimelineCadence.waveformInterval,
+          paused: !isAnimating
+        )
       ) { timeline in
         bars(at: timeline.date.timeIntervalSinceReferenceDate)
       }

@@ -312,7 +312,9 @@ private struct ExpandedTrackTitle: View {
       if shouldLoop && !isHovered && textWidth > geometry.size.width,
         let loopStartDate
       {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+        TimelineView(
+          .animation(minimumInterval: VelnorrTimelineCadence.marqueeInterval)
+        ) { timeline in
           let elapsed = pausedElapsed + max(
             0,
             timeline.date.timeIntervalSince(loopStartDate)
@@ -452,61 +454,108 @@ private struct ExpandedPlaybackProgress: View {
   @State private var previewElapsed: TimeInterval?
 
   var body: some View {
-    TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !status.isPlaying)) { timeline in
-        let elapsed = previewElapsed ?? currentElapsed(at: timeline.date)
-      HStack(spacing: 10) {
-        Text(status.hasTrack ? format(elapsed) : "--:--")
-          .frame(width: 34, alignment: .center)
+    HStack(spacing: 10) {
+      PlaybackTimeLabel(
+        status: status,
+        previewElapsed: previewElapsed,
+        showsRemaining: false
+      )
 
-        GeometryReader { geometry in
-          let progress =
-            status.duration > 0
-            ? min(1, max(0, elapsed / status.duration))
-            : 0
+      ExpandedProgressBar(
+        status: status,
+        previewElapsed: $previewElapsed,
+        onSeek: onSeek
+      )
 
-          ZStack(alignment: .leading) {
-            Capsule()
-              .fill(.white.opacity(0.16))
-            Capsule()
-              .fill(.white.opacity(0.62))
-              .frame(width: geometry.size.width * progress)
-          }
-          .frame(height: 6)
-          .frame(maxHeight: .infinity)
-          .contentShape(Rectangle())
-          .gesture(
-            DragGesture(minimumDistance: 0)
-              .onChanged { value in
-                guard status.duration > 0, geometry.size.width > 0 else { return }
-                let ratio = min(1, max(0, value.location.x / geometry.size.width))
-                previewElapsed = status.duration * ratio
-              }
-              .onEnded { value in
-                guard status.duration > 0, geometry.size.width > 0 else { return }
-                let ratio = min(1, max(0, value.location.x / geometry.size.width))
-                let target = status.duration * ratio
-                previewElapsed = nil
-                onSeek(target)
-              }
-          )
-        }
+      PlaybackTimeLabel(
+        status: status,
+        previewElapsed: previewElapsed,
+        showsRemaining: true
+      )
+    }
+    .font(.system(size: 11, weight: .semibold, design: .rounded))
+    .foregroundStyle(.white.opacity(0.43))
+  }
+}
 
-        Text(
-          status.hasTrack && status.duration > 0
-            ? "-\(format(max(0, status.duration - elapsed)))" : "--:--"
-        )
+private struct PlaybackTimeLabel: View {
+  let status: MusicStatus
+  let previewElapsed: TimeInterval?
+  let showsRemaining: Bool
+
+  var body: some View {
+    TimelineView(
+      .animation(
+        minimumInterval: VelnorrTimelineCadence.durationLabelInterval,
+        paused: !status.isPlaying && previewElapsed == nil
+      )
+    ) { timeline in
+      let elapsed = previewElapsed ?? status.currentElapsed(at: timeline.date)
+      Text(label(for: elapsed))
         .frame(width: 34, alignment: .center)
-      }
-      .font(.system(size: 11, weight: .semibold, design: .rounded))
-      .foregroundStyle(.white.opacity(0.43))
     }
   }
 
-  private func currentElapsed(at date: Date) -> TimeInterval {
-    status.currentElapsed(at: date)
+  private func label(for elapsed: TimeInterval) -> String {
+    guard status.hasTrack else { return "--:--" }
+    if showsRemaining {
+      guard status.duration > 0 else { return "--:--" }
+      return "-\(PlaybackTimeFormatter.string(max(0, status.duration - elapsed)))"
+    }
+    return PlaybackTimeFormatter.string(elapsed)
   }
+}
 
-  private func format(_ seconds: TimeInterval) -> String {
+private struct ExpandedProgressBar: View {
+  let status: MusicStatus
+  @Binding var previewElapsed: TimeInterval?
+  let onSeek: (TimeInterval) -> Void
+
+  var body: some View {
+    TimelineView(
+      .animation(
+        minimumInterval: VelnorrTimelineCadence.progressInterval,
+        paused: !status.isPlaying && previewElapsed == nil
+      )
+    ) { timeline in
+      let elapsed = previewElapsed ?? status.currentElapsed(at: timeline.date)
+      GeometryReader { geometry in
+        let progress = status.duration > 0
+          ? min(1, max(0, elapsed / status.duration))
+          : 0
+
+        ZStack(alignment: .leading) {
+          Capsule()
+            .fill(.white.opacity(0.16))
+          Capsule()
+            .fill(.white.opacity(0.62))
+            .frame(width: geometry.size.width * progress)
+        }
+        .frame(height: 6)
+        .frame(maxHeight: .infinity)
+        .contentShape(Rectangle())
+        .gesture(
+          DragGesture(minimumDistance: 0)
+            .onChanged { value in
+              guard status.duration > 0, geometry.size.width > 0 else { return }
+              let ratio = min(1, max(0, value.location.x / geometry.size.width))
+              previewElapsed = status.duration * ratio
+            }
+            .onEnded { value in
+              guard status.duration > 0, geometry.size.width > 0 else { return }
+              let ratio = min(1, max(0, value.location.x / geometry.size.width))
+              let target = status.duration * ratio
+              previewElapsed = nil
+              onSeek(target)
+            }
+        )
+      }
+    }
+  }
+}
+
+private enum PlaybackTimeFormatter {
+  static func string(_ seconds: TimeInterval) -> String {
     guard seconds.isFinite, seconds >= 0 else { return "0:00" }
     let total = Int(seconds.rounded(.down))
     return "\(total / 60):\(String(format: "%02d", total % 60))"

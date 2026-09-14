@@ -79,7 +79,9 @@ private struct InfiniteMarqueeText: View {
         measuredMarqueeLabel
           .frame(maxWidth: .infinity, alignment: .center)
       } else {
-        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+        TimelineView(
+          .animation(minimumInterval: VelnorrTimelineCadence.marqueeInterval)
+        ) { timeline in
           let travel = max(1, textWidth + spacing)
           let elapsed = max(0, timeline.date.timeIntervalSince(startDate))
           let offset = -CGFloat(elapsed * Double(scrollSpeed))
