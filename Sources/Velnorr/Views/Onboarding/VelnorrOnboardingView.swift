@@ -53,9 +53,9 @@ struct VelnorrOnboardingView: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 32)
+        .frame(maxWidth: 420, alignment: .leading)
         .padding(.vertical, 28)
+        .frame(maxWidth: .infinity, alignment: .center)
       }
 
       Divider()
@@ -74,10 +74,11 @@ struct VelnorrOnboardingView: View {
         .keyboardShortcut(.defaultAction)
         .buttonStyle(.borderedProminent)
       }
+      .frame(maxWidth: 420)
       .padding(.horizontal, 24)
       .padding(.vertical, 16)
     }
-    .frame(minWidth: 560, minHeight: 500)
+    .frame(minWidth: 560, maxWidth: 620, minHeight: 500, maxHeight: 540)
     .environment(\.layoutDirection, isRightToLeft ? .rightToLeft : .leftToRight)
     .background(onboardingBackground)
     .onAppear(perform: refreshPermissions)
@@ -105,9 +106,10 @@ struct VelnorrOnboardingView: View {
         .lineLimit(2)
         .fixedSize(horizontal: false, vertical: true)
     }
-    .frame(maxWidth: .infinity, alignment: .center)
+    .frame(maxWidth: 420, alignment: .center)
     .padding(.horizontal, 32)
     .padding(.vertical, 36)
+    .frame(maxWidth: .infinity, alignment: .center)
     .background(onboardingBackground)
   }
 

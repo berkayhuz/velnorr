@@ -164,7 +164,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     window.title = AppLanguage.selected.localized("Velnorr Setup")
     window.styleMask = [.titled, .closable, .resizable]
     window.setContentSize(NSSize(width: 620, height: 540))
-    window.minSize = NSSize(width: 560, height: 500)
+    window.contentMinSize = NSSize(width: 560, height: 500)
+    window.contentMaxSize = NSSize(width: 620, height: 540)
     window.isReleasedWhenClosed = false
     window.center()
     onboardingWindow = window
