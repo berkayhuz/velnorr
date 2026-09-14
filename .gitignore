@@ -20,6 +20,10 @@ dist/
 .vscode/tasks.json
 .idea/
 
+# Local AI guidance and audit documents
+/AGENTS.md
+/PERFORMANCE_AUDIT.md
+
 # Logs and local environment files
 *.log
 .env
@@ -40,4 +44,3 @@ dist/
 *.tmp
 *.swp
 *.swo
-
