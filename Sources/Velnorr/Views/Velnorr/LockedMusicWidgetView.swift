@@ -55,11 +55,15 @@ struct LockedMusicWidgetView: View {
   @ViewBuilder
   private var widgetSurface: some View {
     if #available(macOS 26.0, *) {
-      widgetContent
-        .glassEffect(
-          .regular.interactive(true),
-          in: roundedWidgetShape
-        )
+      GlassEffectContainer(spacing: 0) {
+        widgetContent
+          .glassEffect(
+            .regular
+              .tint(.white.opacity(0.14))
+              .interactive(),
+            in: roundedWidgetShape
+          )
+      }
     } else {
       // macOS 13–25 do not provide Liquid Glass. Keep the surface system
       // rendered on those versions without reproducing the effect manually.
