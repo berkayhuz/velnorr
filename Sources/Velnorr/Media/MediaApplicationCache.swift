@@ -19,9 +19,13 @@ enum MediaApplicationCache {
     if let cached = applicationIcons[bundleIdentifier] {
       return cached
     }
-    guard let url = Bundle.module.url(forResource: resourceName, withExtension: "svg"),
-      let image = NSImage(contentsOf: url)
-    else { return nil }
+    let image: NSImage?
+    switch resourceName {
+    case "apple-music-icon": image = ResourceImages.appleMusicIcon
+    case "spotify-icon": image = ResourceImages.spotifyIcon
+    default: image = nil
+    }
+    guard let image else { return nil }
     applicationIcons[bundleIdentifier] = image
     return image
   }

@@ -98,15 +98,13 @@ private struct BatteryLevelIcon: View {
   }
 
   private var svgImage: some View {
-    if let url = Bundle.module.url(forResource: "Battery", withExtension: "svg"),
-      let image = NSImage(contentsOf: url)
-    {
+    if let image = ResourceImages.battery {
       return AnyView(
         Image(nsImage: image)
           .resizable()
           .renderingMode(.template)
           .interpolation(.high)
-    .frame(width: width, height: width * 13 / 28)
+          .frame(width: width, height: width * 13 / 28)
       )
     }
     return AnyView(

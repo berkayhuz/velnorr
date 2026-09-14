@@ -858,8 +858,7 @@ private struct SettingsPageContainer<Content: View>: View {
 private struct AboutLogoView: View {
   var body: some View {
     HStack(spacing: 20) {
-      if let url = Bundle.module.url(forResource: "velnorr-logo", withExtension: "svg"),
-        let image = NSImage(contentsOf: url) {
+      if let image = ResourceImages.velnorrLogo {
         Button {
           NSWorkspace.shared.open(URL(string: "http://huzstudio.com/velnorr")!)
         } label: {
@@ -871,8 +870,7 @@ private struct AboutLogoView: View {
         }
         .buttonStyle(AboutLogoButtonStyle())
       }
-      if let url = Bundle.module.url(forResource: "logo-huzstudio", withExtension: "svg"),
-        let image = NSImage(contentsOf: url) {
+      if let image = ResourceImages.huzstudioLogo {
         Button {
           NSWorkspace.shared.open(URL(string: "http://huzstudio.com")!)
         } label: {

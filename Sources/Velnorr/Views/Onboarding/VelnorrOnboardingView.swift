@@ -254,9 +254,7 @@ struct VelnorrOnboardingView: View {
 
   private var brandLogo: some View {
     Group {
-      if let url = Bundle.module.url(forResource: "velnorr-logo", withExtension: "svg"),
-        let image = NSImage(contentsOf: url)
-      {
+      if let image = ResourceImages.velnorrLogo {
         Image(nsImage: image)
           .resizable()
           .scaledToFit()
