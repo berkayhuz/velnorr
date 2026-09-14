@@ -1,10 +1,12 @@
 import AppKit
 import Foundation
 import ImageIO
+import UniformTypeIdentifiers
 
 struct ArtworkPayload: Sendable {
   let data: Data
   let color: ArtworkColor?
+  let decodedByteCost: Int
 }
 
 struct ArtworkColor: Sendable {
@@ -27,7 +29,9 @@ actor ArtworkService {
   }
 
   private let cache = NSCache<NSURL, CacheEntry>()
+  private var inFlight: [URL: Task<ArtworkPayload?, Never>] = [:]
   private let maximumDownloadSize = 10 * 1_024 * 1_024
+  private let thumbnailMaxPixelSize = 160
 
   init() {
     cache.countLimit = 100
@@ -39,6 +43,23 @@ actor ArtworkService {
       return cached.payload
     }
 
+    guard !Task.isCancelled else { return nil }
+
+    if let task = inFlight[url] {
+      return await task.value
+    }
+
+    let task = Task<ArtworkPayload?, Never> { [weak self] in
+      guard let self else { return nil }
+      return await self.downloadAndPrepareArtwork(from: url)
+    }
+    inFlight[url] = task
+    let result = await task.value
+    inFlight[url] = nil
+    return result
+  }
+
+  private func downloadAndPrepareArtwork(from url: URL) async -> ArtworkPayload? {
     guard !Task.isCancelled else { return nil }
 
     let downloadSignpost = VelnorrPerformance.begin(.artworkDownload)
@@ -56,18 +77,51 @@ actor ArtworkService {
     else { return nil }
 
     let decodeSignpost = VelnorrPerformance.begin(.artworkDecode)
-    let color = dominantColor(from: data)
+    let payload = Self.prepareArtwork(data: data, maxPixelSize: thumbnailMaxPixelSize)
     VelnorrPerformance.end(.artworkDecode, decodeSignpost)
-    let payload = ArtworkPayload(data: data, color: color)
-    cache.setObject(CacheEntry(payload: payload), forKey: url as NSURL, cost: data.count)
+    guard let payload else { return nil }
+    cache.setObject(CacheEntry(payload: payload), forKey: url as NSURL, cost: payload.decodedByteCost)
     return payload
   }
 
-  private func dominantColor(from data: Data) -> ArtworkColor? {
+  static func prepareArtwork(data: Data, maxPixelSize: Int) -> ArtworkPayload? {
     guard let source = CGImageSourceCreateWithData(data as CFData, nil),
-      let image = CGImageSourceCreateImageAtIndex(source, 0, nil)
+      let image = CGImageSourceCreateThumbnailAtIndex(
+        source,
+        0,
+        [
+          kCGImageSourceCreateThumbnailFromImageAlways: true,
+          kCGImageSourceThumbnailMaxPixelSize: maxPixelSize,
+          kCGImageSourceCreateThumbnailWithTransform: true,
+          kCGImageSourceShouldCacheImmediately: true,
+        ] as CFDictionary
+      ),
+      let data = pngData(for: image)
     else { return nil }
 
+    return ArtworkPayload(
+      data: data,
+      color: dominantColor(from: image),
+      decodedByteCost: max(1, image.bytesPerRow * image.height)
+    )
+  }
+
+  private static func pngData(for image: CGImage) -> Data? {
+    let data = NSMutableData()
+    guard let destination = CGImageDestinationCreateWithData(
+      data,
+      UTType.png.identifier as CFString,
+      1,
+      nil
+    )
+    else { return nil }
+
+    CGImageDestinationAddImage(destination, image, nil)
+    guard CGImageDestinationFinalize(destination) else { return nil }
+    return data as Data
+  }
+
+  private static func dominantColor(from image: CGImage) -> ArtworkColor? {
     let width = 5
     let height = 5
     var pixels = [UInt8](repeating: 0, count: width * height * 4)
