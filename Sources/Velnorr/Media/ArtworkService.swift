@@ -39,8 +39,14 @@ actor ArtworkService {
       return cached.payload
     }
 
+    guard !Task.isCancelled else { return nil }
+
+    let downloadSignpost = VelnorrPerformance.begin(.artworkDownload)
+    let downloadResult = try? await URLSession.shared.data(from: url)
+    VelnorrPerformance.end(.artworkDownload, downloadSignpost)
+
     guard !Task.isCancelled,
-      let (data, response) = try? await URLSession.shared.data(from: url),
+      let (data, response) = downloadResult,
       let httpResponse = response as? HTTPURLResponse,
       (200..<300).contains(httpResponse.statusCode),
       httpResponse.mimeType?.hasPrefix("image/") == true,
@@ -49,7 +55,10 @@ actor ArtworkService {
       data.count <= maximumDownloadSize
     else { return nil }
 
-    let payload = ArtworkPayload(data: data, color: dominantColor(from: data))
+    let decodeSignpost = VelnorrPerformance.begin(.artworkDecode)
+    let color = dominantColor(from: data)
+    VelnorrPerformance.end(.artworkDecode, decodeSignpost)
+    let payload = ArtworkPayload(data: data, color: color)
     cache.setObject(CacheEntry(payload: payload), forKey: url as NSURL, cost: data.count)
     return payload
   }

@@ -199,6 +199,9 @@ final class MusicStatusStore: ObservableObject {
   }
 
   private func loadAndApplyNowPlaying() async {
+    let signpost = VelnorrPerformance.begin(.mediaRefresh)
+    defer { VelnorrPerformance.end(.mediaRefresh, signpost) }
+
     guard hasStarted, !Task.isCancelled else { return }
 
     var candidates: [SourcedNowPlayingSnapshot] = []

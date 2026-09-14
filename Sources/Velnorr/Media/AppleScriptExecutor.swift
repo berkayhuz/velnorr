@@ -7,6 +7,9 @@ actor AppleScriptExecutor {
   private let logger = Logger(subsystem: "Velnorr", category: "AppleScript")
 
   func execute(_ source: String, operation: String) -> String? {
+    let signpost = VelnorrPerformance.begin(.appleScriptExecute)
+    defer { VelnorrPerformance.end(.appleScriptExecute, signpost) }
+
     guard !Task.isCancelled else { return nil }
     guard let script = NSAppleScript(source: source) else {
       logger.error("Could not create AppleScript for \(operation, privacy: .public)")

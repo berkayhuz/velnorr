@@ -177,6 +177,9 @@ final class BatteryChargeStore: ObservableObject {
   }
 
   private static func readSnapshot() -> Snapshot? {
+    let signpost = VelnorrPerformance.begin(.batteryRead)
+    defer { VelnorrPerformance.end(.batteryRead, signpost) }
+
     let info = IOPSCopyPowerSourcesInfo().takeRetainedValue()
     let sources = IOPSCopyPowerSourcesList(info).takeRetainedValue() as [CFTypeRef]
     for source in sources {

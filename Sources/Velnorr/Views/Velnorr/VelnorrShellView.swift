@@ -82,8 +82,9 @@ struct VelnorrShellView: View {
       && !deviceOverlayVisible
       && !volumeOverlayVisible
       && !batteryOverlayVisible
+    let presentationState = currentPresentationState
     let layout = VelnorrLayout(
-      state: currentPresentationState,
+      state: presentationState,
       isArtworkHovered: trackDetailsVisible,
       hasTrack: music.status.hasTrack,
       metrics: metrics
@@ -595,6 +596,10 @@ struct VelnorrShellView: View {
           automaticTrackPeekTask = nil
           isAutomaticTrackPeekVisible = false
         }
+      }
+
+      .onChange(of: presentationState) { _ in
+        VelnorrPerformance.emit(.shellPresentationTransition)
       }
 
       .onChange(of: capsLock.isVisible) { visible in

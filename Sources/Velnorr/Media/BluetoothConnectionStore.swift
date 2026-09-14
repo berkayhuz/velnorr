@@ -263,6 +263,9 @@ final class BluetoothConnectionStore: NSObject, ObservableObject {
 
 private actor BluetoothDeviceDetailsProvider {
   func batteryPercentage(address: String, name: String) -> Int? {
+    let signpost = VelnorrPerformance.begin(.bluetoothSystemProfiler)
+    defer { VelnorrPerformance.end(.bluetoothSystemProfiler, signpost) }
+
     let process = Process()
     let output = Pipe()
     process.executableURL = URL(fileURLWithPath: "/usr/sbin/system_profiler")

@@ -241,6 +241,9 @@ final class VelnorrWindow: NSWindow {
   }
 
   private func refreshMouseState() {
+    let signpost = VelnorrPerformance.begin(.windowMouseRefresh)
+    defer { VelnorrPerformance.end(.windowMouseRefresh, signpost) }
+
     updateMousePassthrough()
     updateMousePolling()
   }
