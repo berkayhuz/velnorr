@@ -10,6 +10,7 @@ struct CapsLockHUDView: View {
   let reduceMotion: Bool
 
   @State private var isSeparated = false
+  @State private var isHovered = false
 
   private let diameter: CGFloat = 30
   private let restingGap: CGFloat = 12
@@ -36,12 +37,26 @@ struct CapsLockHUDView: View {
             .transition(.scale(scale: 0.72).combined(with: .opacity))
         }
         .shadow(color: .black.opacity(isSeparated ? 0.3 : 0), radius: 7, y: 3)
-        .scaleEffect(isSeparated ? 1 : 0.62, anchor: .top)
+        .scaleEffect(
+          isSeparated
+            ? (isHovered ? 1.2 : 1)
+            : 0.62,
+          anchor: .top
+        )
         .offset(y: isSeparated ? restingGap : -diameter * 0.48)
+        .contentShape(Circle())
+        .onHover { hovering in
+          guard isVisible else { return }
+          withAnimation(
+            reduceMotion ? .easeOut(duration: 0.1) : VelnorrAnimation.control
+          ) {
+            isHovered = hovering
+          }
+        }
     }
     .frame(width: 46, height: restingGap + diameter, alignment: .top)
     .opacity(isSeparated ? 1 : 0)
-    .allowsHitTesting(false)
+    .allowsHitTesting(isVisible)
     .accessibilityHidden(!isVisible)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(
@@ -51,6 +66,9 @@ struct CapsLockHUDView: View {
       setVisible(isVisible, animated: false)
     }
     .onChange(of: isVisible) { visible in
+      if !visible {
+        isHovered = false
+      }
       setVisible(visible, animated: true)
     }
     .animation(

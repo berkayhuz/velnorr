@@ -6,6 +6,7 @@ struct VelnorrShellView: View {
   let metrics: NotchMetrics
   let onLayoutChange: ((CGRect, CGFloat, CGFloat) -> Void)?
   let onMediaExpandedChange: ((Bool) -> Void)?
+  let onCapsLockVisibilityChange: ((Bool) -> Void)?
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @AppStorage(AppSettings.expandOnHover) private var expandOnHover = true
   @AppStorage("volumeHUD") private var volumeHUDEnabled = true
@@ -420,6 +421,13 @@ struct VelnorrShellView: View {
       .clipShape(
         velnorrShape
       )
+      // Keep the main-surface hover region separate from the detached
+      // Caps Lock bubble below it.
+      .onHover { hovering in
+        handleOuterHover(
+          hovering
+        )
+      }
       .overlay(alignment: .top) {
         CapsLockHUDView(
           isEnabled: capsLock.isEnabled,
@@ -434,14 +442,6 @@ struct VelnorrShellView: View {
         animationsEnabled ? VelnorrAnimation.surface(reduceMotion: reduceMotion) : nil,
         value: layout
       )
-
-      // MARK: - Hover
-
-      .onHover { hovering in
-        handleOuterHover(
-          hovering
-        )
-      }
 
       .onReceive(
         NotificationCenter.default.publisher(for: .velnorrPreviewBattery)
@@ -564,6 +564,7 @@ struct VelnorrShellView: View {
         batteryCharge.start()
         bluetoothConnection.start()
         onMediaExpandedChange?(interaction.isMediaExpanded)
+        onCapsLockVisibilityChange?(capsLockHUDEnabled && capsLock.isVisible)
 
         reportLayout(
           horizontalOffset: layout.horizontalOffset,
@@ -576,6 +577,7 @@ struct VelnorrShellView: View {
 
       .onDisappear {
         onMediaExpandedChange?(false)
+        onCapsLockVisibilityChange?(false)
         automaticTrackPeekTask?.cancel()
         automaticTrackPeekTask = nil
         music.stop()
@@ -593,6 +595,14 @@ struct VelnorrShellView: View {
           automaticTrackPeekTask = nil
           isAutomaticTrackPeekVisible = false
         }
+      }
+
+      .onChange(of: capsLock.isVisible) { visible in
+        onCapsLockVisibilityChange?(capsLockHUDEnabled && visible)
+      }
+
+      .onChange(of: capsLockHUDEnabled) { enabled in
+        onCapsLockVisibilityChange?(enabled && capsLock.isVisible)
       }
 
       .onChange(of: music.status.trackKey) { trackKey in

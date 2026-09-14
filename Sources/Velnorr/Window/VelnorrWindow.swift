@@ -28,6 +28,8 @@ final class VelnorrWindow: NSWindow {
   private var mousePollingRate: MousePollingRate?
   private var pointerInsideVelnorr = false
   private var isMediaInteractive = false
+  private var isCapsLockInteractive = false
+  private var velnorrLayoutRect = CGRect.zero
   private let displayMode: VelnorrDisplayMode
   private let displayID: CGDirectDisplayID
 
@@ -85,6 +87,11 @@ final class VelnorrWindow: NSWindow {
         onMediaExpandedChange: { [weak self] expanded in
           guard let self else { return }
           self.isMediaInteractive = expanded
+          self.refreshMouseState()
+        },
+        onCapsLockVisibilityChange: { [weak self] visible in
+          guard let self else { return }
+          self.isCapsLockInteractive = visible
           self.refreshMouseState()
         }
       )
@@ -185,6 +192,7 @@ final class VelnorrWindow: NSWindow {
     radius: CGFloat,
     bottomRadius: CGFloat
   ) {
+    velnorrLayoutRect = rect
     let hitRect = CGRect(
       x: (NotchMetrics.canvasWidth - rect.width) / 2 + rect.minX,
       y: 0,
@@ -273,8 +281,11 @@ final class VelnorrWindow: NSWindow {
 
   private func updateMousePassthrough() {
     let screenPoint = NSEvent.mouseLocation
-    let inside = containsVelnorr(atScreenPoint: screenPoint)
+    let insideSurface = containsVelnorr(atScreenPoint: screenPoint)
       || (displayMode == .pill && containsPillInteractionRegion(atScreenPoint: screenPoint))
+    let insideCapsLock = isCapsLockInteractive
+      && containsCapsLockInteractionRegion(atScreenPoint: screenPoint)
+    let inside = insideSurface || insideCapsLock
 
     ignoresMouseEvents = VelnorrMousePolicy.ignoresMouseEvents(
       isMediaExpanded: isMediaInteractive,
@@ -286,7 +297,23 @@ final class VelnorrWindow: NSWindow {
       return
     }
 
-    updatePointerInsideState(inside)
+    updatePointerInsideState(insideSurface)
+  }
+
+  private func containsCapsLockInteractionRegion(atScreenPoint screenPoint: NSPoint) -> Bool {
+    let diameter: CGFloat = 30
+    let restingGap: CGFloat = 12
+    guard velnorrLayoutRect.maxY + restingGap + diameter <= frame.height else { return false }
+
+    let windowPoint = convertPoint(fromScreen: screenPoint)
+    let topLeftPoint = CGPoint(x: windowPoint.x, y: frame.height - windowPoint.y)
+    let region = CGRect(
+      x: (NotchMetrics.canvasWidth - diameter) / 2,
+      y: velnorrLayoutRect.maxY + restingGap,
+      width: diameter,
+      height: diameter
+    )
+    return region.contains(topLeftPoint)
   }
 
   private func updatePointerInsideState(_ inside: Bool) {
