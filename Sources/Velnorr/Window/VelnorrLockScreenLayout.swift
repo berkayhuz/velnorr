@@ -13,6 +13,19 @@ enum VelnorrLockScreenLayout {
     screenFrame.minY + screenFrame.height * profilePhotoTopRatioFromBottom
   }
 
+  static func lockIconX(
+    width: CGFloat,
+    topRadius: CGFloat,
+    centerGap: CGFloat
+  ) -> CGFloat {
+    if centerGap == 0 {
+      return width / 2
+    }
+    // A physical notch removes the rounded outer corner from the visible
+    // interval at the icon's vertical center.
+    return (topRadius + width) / 2
+  }
+
   static func widgetFrame(for screenFrame: CGRect) -> CGRect {
     let profilePhotoTop = profilePhotoTop(in: screenFrame)
     return CGRect(

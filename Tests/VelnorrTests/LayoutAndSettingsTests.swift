@@ -200,4 +200,25 @@ final class LayoutAndSettingsTests: XCTestCase {
     XCTAssertEqual(widgetFrame.midX, screenFrame.midX, accuracy: 0.001)
     XCTAssertEqual(widgetFrame.size, VelnorrLockScreenLayout.widgetSize)
   }
+
+  func testLockScreenLockIconIsCenteredInLeadingSide() {
+    XCTAssertEqual(
+      VelnorrLockScreenLayout.lockIconX(
+        width: 68,
+        topRadius: 12,
+        centerGap: 0
+      ),
+      34,
+      accuracy: 0.001
+    )
+    XCTAssertEqual(
+      VelnorrLockScreenLayout.lockIconX(
+        width: 63,
+        topRadius: 12,
+        centerGap: 148
+      ),
+      37.5,
+      accuracy: 0.001
+    )
+  }
 }

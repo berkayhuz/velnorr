@@ -106,12 +106,12 @@ struct LockedMusicWidgetView: View {
       showAudioOutput: audioOutputButtonEnabled,
       showPlaybackButton: playbackButtonEnabled,
       allowsExternalNavigation: false,
-      allowsAudioOutput: false
+      allowsAudioOutput: false,
+      isLockScreenWidget: true
     )
     .frame(
       width: VelnorrLockScreenLayout.widgetSize.width - 24,
-      height: VelnorrLockScreenLayout.widgetSize.height - 15
+      height: VelnorrLockScreenLayout.widgetSize.height
     )
-    .padding(.top, 6)
   }
 }

@@ -23,6 +23,7 @@ struct ExpandedNowPlayingView: View {
   let showPlaybackButton: Bool
   let allowsExternalNavigation: Bool
   let allowsAudioOutput: Bool
+  let isLockScreenWidget: Bool
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @AppStorage("appearanceAnimations") private var animationsEnabled = true
   @State private var isShuffleEnabled = false
@@ -47,7 +48,8 @@ struct ExpandedNowPlayingView: View {
     showAudioOutput: Bool,
     showPlaybackButton: Bool,
     allowsExternalNavigation: Bool = true,
-    allowsAudioOutput: Bool = true
+    allowsAudioOutput: Bool = true,
+    isLockScreenWidget: Bool = false
   ) {
     self.status = status
     self.onOpenSource = onOpenSource
@@ -69,6 +71,7 @@ struct ExpandedNowPlayingView: View {
     self.showPlaybackButton = showPlaybackButton
     self.allowsExternalNavigation = allowsExternalNavigation
     self.allowsAudioOutput = allowsAudioOutput
+    self.isLockScreenWidget = isLockScreenWidget
   }
 
   var body: some View {
@@ -105,7 +108,10 @@ struct ExpandedNowPlayingView: View {
   }
 
   private var header: some View {
-    HStack(spacing: 10) {
+    HStack(
+      alignment: isLockScreenWidget ? .top : .center,
+      spacing: isLockScreenWidget ? 16 : 10
+    ) {
       Button(action: onOpenSource) {
         expandedArtwork
           .id(status.trackKey)
@@ -116,7 +122,7 @@ struct ExpandedNowPlayingView: View {
       .disabled(!allowsExternalNavigation)
       .accessibilityLabel("Open music source")
 
-      VStack(alignment: .leading, spacing: 2) {
+      VStack(alignment: .leading, spacing: isLockScreenWidget ? 7 : 2) {
         Button(action: onOpenTrack) {
           ExpandedTrackTitle(
             text: status.hasTrack && !status.title.isEmpty ? status.title : "Not Playing",
@@ -152,7 +158,11 @@ struct ExpandedNowPlayingView: View {
       }
       .id(status.trackKey)
       .transition(.opacity.combined(with: .offset(x: 4)))
-      .offset(y: 12)
+      .frame(
+        height: isLockScreenWidget ? 54 : nil,
+        alignment: .center
+      )
+      .offset(y: isLockScreenWidget ? 3 : 12)
 
       Spacer(minLength: 10)
 
@@ -161,8 +171,12 @@ struct ExpandedNowPlayingView: View {
           color: Color(nsColor: status.accentColor).opacity(0.72),
           isAnimating: status.isPlaying
         )
-          .frame(width: 24, height: 21)
-          .offset(x: -4, y: 6)
+          .frame(
+            width: 24,
+            height: 21,
+            alignment: isLockScreenWidget ? .top : .center
+          )
+          .offset(x: -4, y: isLockScreenWidget ? 10 : 6)
       } else {
         NotPlayingIndicator()
           .frame(width: 24, height: 21)
