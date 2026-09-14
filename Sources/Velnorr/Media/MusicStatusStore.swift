@@ -258,6 +258,9 @@ final class MusicStatusStore: ObservableObject {
     }
 
     if shouldUpdateStatus {
+      let elapsed = sameTrack && status.isPlaying && resolvedIsPlaying
+        ? expectedElapsed
+        : snapshot.elapsed
       status = MusicStatus(
         hasTrack: true,
         isPlaying: resolvedIsPlaying,
@@ -269,7 +272,7 @@ final class MusicStatusStore: ObservableObject {
         title: snapshot.title,
         artist: snapshot.artist,
         source: selected.source,
-        elapsed: snapshot.elapsed,
+        elapsed: elapsed,
         duration: snapshot.duration,
         playbackUpdatedAt: now
       )
@@ -374,9 +377,7 @@ final class MusicStatusStore: ObservableObject {
   }
 
   private func currentElapsed(at date: Date) -> TimeInterval {
-    let elapsed =
-      status.elapsed + (status.isPlaying ? date.timeIntervalSince(status.playbackUpdatedAt) : 0)
-    return status.duration > 0 ? min(status.duration, max(0, elapsed)) : max(0, elapsed)
+    status.currentElapsed(at: date)
   }
 
   private func defaultAccentColor(for source: MusicSource) -> NSColor {

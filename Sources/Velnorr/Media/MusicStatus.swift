@@ -15,4 +15,11 @@ struct MusicStatus {
   var elapsed: TimeInterval = 0
   var duration: TimeInterval = 0
   var playbackUpdatedAt = Date()
+
+  func currentElapsed(at date: Date) -> TimeInterval {
+    let liveElapsed =
+      elapsed + (isPlaying ? date.timeIntervalSince(playbackUpdatedAt) : 0)
+    guard duration > 0 else { return max(0, liveElapsed) }
+    return min(duration, max(0, liveElapsed))
+  }
 }
