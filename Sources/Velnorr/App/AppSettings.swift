@@ -8,6 +8,7 @@ enum AppSettings {
   static let horizontalOffset = "hudHorizontalOffset"
   static let verticalOffset = "hudVerticalOffset"
   static let language = "appLanguage"
+  static let onboardingCompleted = "onboardingCompleted"
 
   @MainActor static let defaults: [String: Any] = [
     launchAtLogin: true,

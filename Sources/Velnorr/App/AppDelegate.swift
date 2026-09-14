@@ -13,6 +13,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   private var clickMonitors: [Any] = []
   private var appliedSettings: AppSettingsSnapshot?
   private var settingsWindow: NSWindow?
+  private var onboardingWindow: NSWindow?
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     UserDefaults.standard.register(defaults: AppSettings.defaults)
@@ -21,6 +22,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     NSApp.setActivationPolicy(.accessory)
     terminateOtherInstances()
     rebuildVelnorrs()
+
+    if !UserDefaults.standard.bool(forKey: AppSettings.onboardingCompleted) {
+      DispatchQueue.main.async { [weak self] in
+        self?.showOnboardingWindow()
+      }
+    }
 
     screenObserver = NotificationCenter.default.addObserver(
       forName: NSApplication.didChangeScreenParametersNotification,
@@ -114,6 +121,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     velnorrWindows.removeAll()
     settingsWindow?.close()
     settingsWindow = nil
+    onboardingWindow?.close()
+    onboardingWindow = nil
   }
 
   private func showSettingsWindow() {
@@ -132,6 +141,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     window.isReleasedWhenClosed = false
     window.center()
     settingsWindow = window
+
+    NSApp.activate(ignoringOtherApps: true)
+    window.makeKeyAndOrderFront(nil)
+  }
+
+  private func showOnboardingWindow() {
+    if let onboardingWindow {
+      NSApp.activate(ignoringOtherApps: true)
+      onboardingWindow.makeKeyAndOrderFront(nil)
+      return
+    }
+
+    let hostingController = NSHostingController(
+      rootView: VelnorrOnboardingView { [weak self] in
+        UserDefaults.standard.set(true, forKey: AppSettings.onboardingCompleted)
+        self?.onboardingWindow?.close()
+        self?.onboardingWindow = nil
+      }
+    )
+    let window = NSWindow(contentViewController: hostingController)
+    window.title = AppLanguage.selected.localized("Velnorr Setup")
+    window.styleMask = [.titled, .closable, .resizable]
+    window.setContentSize(NSSize(width: 620, height: 540))
+    window.minSize = NSSize(width: 560, height: 500)
+    window.isReleasedWhenClosed = false
+    window.center()
+    onboardingWindow = window
 
     NSApp.activate(ignoringOtherApps: true)
     window.makeKeyAndOrderFront(nil)
