@@ -14,6 +14,7 @@ let package = Package(
       path: "Sources/Velnorr",
       resources: [
         .copy("Resources/Battery.svg"),
+        .copy("Resources/velnorr-logo-curved.svg"),
         .copy("Resources/velnorr-logo.svg"),
         .copy("Resources/logo-huzstudio.svg"),
         .copy("Resources/apple-music-icon.svg"),
