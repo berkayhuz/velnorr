@@ -53,28 +53,28 @@ struct LockedMusicWidgetView: View {
   }
 
   @ViewBuilder
-  private var widgetSurface: some View {
-    if #available(macOS 26.0, *) {
-      GlassEffectContainer(spacing: 0) {
-        widgetContent
-          .glassEffect(
-            .regular
-              .tint(.white.opacity(0.14))
-              .interactive(),
-            in: roundedWidgetShape
-          )
-      }
-    } else {
-      // macOS 13–25 do not provide Liquid Glass. Keep the surface system
-      // rendered on those versions without reproducing the effect manually.
-      widgetContent
-        .background(.ultraThinMaterial, in: roundedWidgetShape)
-    }
+private var widgetSurface: some View {
+  if #available(macOS 26.0, *) {
+    widgetContent
+      .glassEffect(
+        .clear.interactive(),
+        in: roundedWidgetShape
+      )
+  } else {
+    widgetContent
+      .background(
+        .ultraThinMaterial,
+        in: roundedWidgetShape
+      )
   }
+}
 
-  private var roundedWidgetShape: RoundedRectangle {
-    RoundedRectangle(cornerRadius: 24, style: .continuous)
-  }
+private var roundedWidgetShape: RoundedRectangle {
+  RoundedRectangle(
+    cornerRadius: 28,
+    style: .continuous
+  )
+}
 
   private func togglePlayback() {
     let wasPlaying = music.status.isPlaying
@@ -110,12 +110,12 @@ struct LockedMusicWidgetView: View {
       showAudioOutput: audioOutputButtonEnabled,
       showPlaybackButton: playbackButtonEnabled,
       allowsExternalNavigation: false,
-      allowsAudioOutput: false,
+      allowsAudioOutput: true,
       isLockScreenWidget: true
     )
-    .frame(
-      width: VelnorrLockScreenLayout.widgetSize.width - 24,
-      height: VelnorrLockScreenLayout.widgetSize.height
-    )
+.frame(
+  width: VelnorrLockScreenLayout.widgetSize.width,
+  height: VelnorrLockScreenLayout.widgetSize.height
+)
   }
 }

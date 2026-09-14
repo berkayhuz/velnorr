@@ -79,22 +79,43 @@ struct ExpandedNowPlayingView: View {
       // OutwardTopVelnorrShape's vertical sides sit `topRadius` points
       // inside its bounding rect. Keep content an additional 12pt
       // inside those sides, otherwise it is clipped by the black shape.
-      let horizontalInset = min(
-        isFloatingPill ? 28 : NotchMetrics.notchExpandedRadius + 12,
-        geometry.size.width / 2
-      )
+let horizontalInset = min(
+  isLockScreenWidget
+    ? 20
+    : (
+      isFloatingPill
+        ? 28
+        : NotchMetrics.notchExpandedRadius + 12
+    ),
+  geometry.size.width / 2
+)
       let contentWidth = max(0, geometry.size.width - horizontalInset * 2)
 
       ZStack(alignment: .topLeading) {
-        header
-          .frame(width: contentWidth, height: 54)
-          .offset(x: horizontalInset, y: 19)
+header
+  .frame(
+    width: contentWidth,
+    height: 54
+  )
+  .offset(
+    x: horizontalInset,
+    y: isLockScreenWidget ? 16 : 19
+  )
 
-        if showProgress {
-          ExpandedPlaybackProgress(status: status, onSeek: onSeek)
-            .frame(width: contentWidth, height: 18)
-            .offset(x: horizontalInset, y: 92)
-        }
+if showProgress {
+  ExpandedPlaybackProgress(
+    status: status,
+    onSeek: onSeek
+  )
+  .frame(
+    width: contentWidth,
+    height: 18
+  )
+  .offset(
+    x: horizontalInset,
+    y: isLockScreenWidget ? 88 : 92
+  )
+}
 
         controls
           .frame(width: contentWidth, height: 34)
@@ -141,10 +162,22 @@ struct ExpandedNowPlayingView: View {
         if status.hasTrack {
           Button(action: onOpenArtist) {
             Text(status.artist.isEmpty ? "Bilinmeyen Sanatçı" : status.artist)
-              .font(.system(size: 11, weight: .medium))
-              .foregroundStyle(.white.opacity(0.46))
-              .lineLimit(1)
-              .frame(maxWidth: .infinity, alignment: .leading)
+  .font(
+    .system(
+      size: isLockScreenWidget ? 13 : 11,
+      weight: isLockScreenWidget ? .semibold : .medium
+    )
+  )
+  .foregroundStyle(
+    isLockScreenWidget
+      ? Color.white.opacity(0.95)
+      : Color.white.opacity(0.46)
+  )
+  .lineLimit(1)
+  .frame(
+    maxWidth: .infinity,
+    alignment: .leading
+  )
           }
           .buttonStyle(
             VelnorrButtonStyle(
