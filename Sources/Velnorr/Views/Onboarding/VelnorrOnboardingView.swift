@@ -3,13 +3,23 @@ import AppKit
 import CoreGraphics
 import SwiftUI
 
-private enum OnboardingPage: Int {
+enum OnboardingPage: Int {
   case welcome
   case permissions
   case indicators
 
   var next: Self { Self(rawValue: rawValue + 1) ?? .indicators }
   var previous: Self { Self(rawValue: rawValue - 1) ?? .welcome }
+}
+
+enum OnboardingPermissionPolicy {
+  static func shouldPoll(
+    page: OnboardingPage,
+    accessibilityGranted: Bool,
+    listenEventsGranted: Bool
+  ) -> Bool {
+    page == .permissions && (!accessibilityGranted || !listenEventsGranted)
+  }
 }
 
 struct VelnorrOnboardingView: View {
@@ -84,12 +94,23 @@ struct VelnorrOnboardingView: View {
       logiOptionsInstalled = FileManager.default.fileExists(
         atPath: "/Applications/logioptionsplus.app"
       )
-      refreshPermissions()
+      _ = refreshPermissions()
     }
-    .onReceive(
-      Timer.publish(every: 1, on: .main, in: .common).autoconnect()
-    ) { _ in
-      refreshPermissions()
+    .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+      guard page == .permissions else { return }
+      _ = refreshPermissions()
+    }
+    .task(id: page) {
+      guard page == .permissions else { return }
+      while !Task.isCancelled {
+        let permissions = refreshPermissions()
+        guard OnboardingPermissionPolicy.shouldPoll(
+          page: page,
+          accessibilityGranted: permissions.accessibility,
+          listenEventsGranted: permissions.listenEvents
+        ) else { return }
+        try? await Task.sleep(for: .seconds(1))
+      }
     }
   }
 
@@ -378,9 +399,14 @@ struct VelnorrOnboardingView: View {
     .background(.white.opacity(0.06), in: RoundedRectangle(cornerRadius: 10))
   }
 
-  private func refreshPermissions() {
-    accessibilityGranted = AXIsProcessTrusted()
-    listenEventsGranted = CGPreflightListenEventAccess()
+  private func refreshPermissions() -> (accessibility: Bool, listenEvents: Bool) {
+    let permissions = (
+      accessibility: AXIsProcessTrusted(),
+      listenEvents: CGPreflightListenEventAccess()
+    )
+    accessibilityGranted = permissions.accessibility
+    listenEventsGranted = permissions.listenEvents
+    return permissions
   }
 
   private var externalIndicatorSetupComplete: Bool {
