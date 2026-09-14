@@ -34,6 +34,7 @@ final class BluetoothConnectionStore: NSObject, ObservableObject {
   // shared across stores so one physical connection creates one HUD event.
   private static var recentConnectionEvents: [String: Date] = [:]
   private static let duplicateEventWindow: TimeInterval = 4
+  private static let maximumRecentConnectionEvents = 64
 
   @Published private(set) var device: ConnectedAppleDevice?
   @Published private(set) var isVisible = false
@@ -147,10 +148,16 @@ final class BluetoothConnectionStore: NSObject, ObservableObject {
     }
     let eventKey = address.isEmpty ? "name:\(name)" : "address:\(address)"
     let now = Date()
+    Self.pruneRecentConnectionEvents(now: now)
     if let previous = Self.recentConnectionEvents[eventKey],
       now.timeIntervalSince(previous) < Self.duplicateEventWindow
     {
       return
+    }
+    if Self.recentConnectionEvents.count >= Self.maximumRecentConnectionEvents,
+      let oldestKey = Self.recentConnectionEvents.min(by: { $0.value < $1.value })?.key
+    {
+      Self.recentConnectionEvents[oldestKey] = nil
     }
     Self.recentConnectionEvents[eventKey] = now
 
@@ -179,6 +186,12 @@ final class BluetoothConnectionStore: NSObject, ObservableObject {
       guard !Task.isCancelled else { return }
       self?.isVisible = false
       self?.hideTask = nil
+    }
+  }
+
+  private static func pruneRecentConnectionEvents(now: Date) {
+    recentConnectionEvents = recentConnectionEvents.filter {
+      now.timeIntervalSince($0.value) < duplicateEventWindow
     }
   }
 
@@ -262,26 +275,69 @@ final class BluetoothConnectionStore: NSObject, ObservableObject {
 }
 
 private actor BluetoothDeviceDetailsProvider {
-  func batteryPercentage(address: String, name: String) -> Int? {
-    let signpost = VelnorrPerformance.begin(.bluetoothSystemProfiler)
-    defer { VelnorrPerformance.end(.bluetoothSystemProfiler, signpost) }
+  private struct CacheEntry {
+    let value: Int
+    let expiresAt: Date
+  }
 
-    let process = Process()
-    let output = Pipe()
-    process.executableURL = URL(fileURLWithPath: "/usr/sbin/system_profiler")
-    process.arguments = ["SPBluetoothDataType", "-json"]
-    process.standardOutput = output
-    process.standardError = FileHandle.nullDevice
+  private static let cacheLifetime: TimeInterval = 15
+  private static let cacheLimit = 64
+  private static let processTimeout: TimeInterval = 4
 
-    do {
-      try process.run()
-      let data = output.fileHandleForReading.readDataToEndOfFile()
-      process.waitUntilExit()
-      guard process.terminationStatus == 0 else { return nil }
-      return Self.findBattery(in: data, address: address, name: name)
-    } catch {
-      return nil
+  private var batteryCache: [String: CacheEntry] = [:]
+  private var inFlight: [String: Task<Int?, Never>] = [:]
+
+  func batteryPercentage(address: String, name: String) async -> Int? {
+    let key = Self.cacheKey(address: address, name: name)
+    let now = Date()
+    batteryCache = batteryCache.filter { $0.value.expiresAt > now }
+    if let cached = batteryCache[key] {
+      return cached.value
     }
+    if let task = inFlight[key] {
+      return await task.value
+    }
+
+    let task: Task<Int?, Never> = Task.detached(priority: .utility) {
+      await Self.fetchBatteryPercentage(address: address, name: name)
+    }
+    inFlight[key] = task
+    let value = await task.value
+    inFlight[key] = nil
+    if let value {
+      batteryCache[key] = CacheEntry(
+        value: value,
+        expiresAt: Date().addingTimeInterval(Self.cacheLifetime)
+      )
+      trimCacheIfNeeded()
+    }
+    return value
+  }
+
+  private func trimCacheIfNeeded() {
+    guard batteryCache.count > Self.cacheLimit else { return }
+    let overflow = batteryCache.count - Self.cacheLimit
+    let keysToRemove = batteryCache
+      .sorted { $0.value.expiresAt < $1.value.expiresAt }
+      .prefix(overflow)
+      .map(\.key)
+    for key in keysToRemove {
+      batteryCache[key] = nil
+    }
+  }
+
+  private static func cacheKey(address: String, name: String) -> String {
+    let normalizedAddress = address.trimmingCharacters(in: .whitespacesAndNewlines).uppercased()
+    return normalizedAddress.isEmpty ? "name:\(name)" : "address:\(normalizedAddress)"
+  }
+
+  private static func fetchBatteryPercentage(address: String, name: String) async -> Int? {
+    let signpost = VelnorrPerformance.begin(.bluetoothSystemProfiler)
+    let operation = SystemProfilerOperation(timeout: processTimeout)
+    let data = await operation.run()
+    VelnorrPerformance.end(.bluetoothSystemProfiler, signpost)
+    guard let data else { return nil }
+    return findBattery(in: data, address: address, name: name)
   }
 
   private static func findBattery(in data: Data, address: String, name: String) -> Int? {
@@ -325,5 +381,79 @@ private actor BluetoothDeviceDetailsProvider {
     let digits = text.filter(\.isNumber)
     guard let value = Int(digits) else { return nil }
     return min(100, max(0, value))
+  }
+}
+
+private final class SystemProfilerOperation: @unchecked Sendable {
+  private let timeout: TimeInterval
+  private let lock = NSLock()
+  private var process: Process?
+  private var isCancelled = false
+
+  init(timeout: TimeInterval) {
+    self.timeout = timeout
+  }
+
+  func run() async -> Data? {
+    await withTaskCancellationHandler(operation: {
+      await withCheckedContinuation { (continuation: CheckedContinuation<Data?, Never>) in
+        DispatchQueue.global(qos: .utility).async { [self] in
+          execute(continuation: continuation)
+        }
+      }
+    }, onCancel: { [self] in
+      cancel()
+    })
+  }
+
+  private func execute(continuation: CheckedContinuation<Data?, Never>) {
+    let process = Process()
+    let output = Pipe()
+    process.executableURL = URL(fileURLWithPath: "/usr/sbin/system_profiler")
+    process.arguments = ["SPBluetoothDataType", "-json"]
+    process.standardOutput = output
+    process.standardError = FileHandle.nullDevice
+
+    lock.lock()
+    if isCancelled {
+      lock.unlock()
+      continuation.resume(returning: nil)
+      return
+    }
+    self.process = process
+    lock.unlock()
+
+    do {
+      try process.run()
+    } catch {
+      finish(continuation: continuation, data: nil)
+      return
+    }
+
+    DispatchQueue.global(qos: .utility).asyncAfter(deadline: .now() + timeout) { [weak self] in
+      self?.cancel()
+    }
+    process.waitUntilExit()
+    let data = output.fileHandleForReading.readDataToEndOfFile()
+    let result = process.terminationStatus == 0 ? data : nil
+    finish(continuation: continuation, data: result)
+  }
+
+  private func cancel() {
+    lock.lock()
+    isCancelled = true
+    let process = self.process
+    lock.unlock()
+    if let process, process.isRunning {
+      process.terminate()
+    }
+  }
+
+  private func finish(continuation: CheckedContinuation<Data?, Never>, data: Data?) {
+    lock.lock()
+    process = nil
+    let cancelled = isCancelled
+    lock.unlock()
+    continuation.resume(returning: cancelled ? nil : data)
   }
 }
