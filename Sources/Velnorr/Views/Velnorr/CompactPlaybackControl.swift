@@ -26,14 +26,14 @@ struct CompactPlaybackControl: View {
           height: 20
         )
         .blur(
-          radius: isHovered ? 2.2 : 0
+          radius: isHovered ? 1.8 : 0
         )
         .opacity(
-          isHovered ? 0.5 : 1
+          isHovered ? 0.58 : 1
         )
         .shadow(
           color: Color(nsColor: status.accentColor)
-            .opacity(isHovered ? 0.72 : 0),
+            .opacity(isHovered ? 0.64 : 0),
           radius: 5.5
         )
       }
@@ -52,7 +52,7 @@ struct CompactPlaybackControl: View {
             height: 20
           )
           .scaleEffect(
-            isPressed ? 1.0 : 1.25
+            isPressed ? 1.06 : 1.12
           )
           .shadow(
             color: Color(nsColor: status.accentColor)
@@ -60,7 +60,7 @@ struct CompactPlaybackControl: View {
             radius: 4
           )
           .transition(
-            .scale(scale: 0.25)
+            .scale(scale: 0.72)
               .combined(with: .opacity)
           )
       } else if !status.isPlaying {
@@ -87,7 +87,7 @@ struct CompactPlaybackControl: View {
       }
       .frame(width: 20, height: 20)
       .contentShape(Rectangle())
-      .scaleEffect(status.isPlaying && isPressed ? 0.95 : 1)
+      .scaleEffect(status.isPlaying && isPressed ? 0.98 : 1)
     }
     .buttonStyle(.plain)
     .onHover(perform: onHover)
@@ -95,7 +95,13 @@ struct CompactPlaybackControl: View {
       minimumDuration: 0,
       maximumDistance: 12,
       pressing: { pressing in
-        isPressed = pressing
+        withAnimation(
+          motionReduced
+            ? .easeOut(duration: 0.1)
+            : VelnorrAnimation.control
+        ) {
+          isPressed = pressing
+        }
       },
       perform: {}
     )

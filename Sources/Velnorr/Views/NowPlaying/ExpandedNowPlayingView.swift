@@ -407,7 +407,7 @@ private struct ExpandedTrackTitle: View {
         let loopStartDate
       {
         TimelineView(
-          .animation(minimumInterval: VelnorrTimelineCadence.marqueeInterval)
+          .animation(minimumInterval: VelnorrTimelineCadence.expandedMarqueeInterval)
         ) { timeline in
           let elapsed = pausedElapsed + max(
             0,

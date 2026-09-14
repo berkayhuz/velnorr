@@ -92,8 +92,10 @@ struct LockHUDView: View {
   let rightSideWidth: CGFloat
   let height: CGFloat
   let topRadius: CGFloat
-  let rightIconName: String
-  let rightIconColor: Color
+  @AppStorage(AppSettings.lockScreenRightIcon) private var rightIconName =
+    AppSettings.defaultLockScreenRightIcon
+  @AppStorage(AppSettings.lockScreenRightIconColor) private var rightIconColorName =
+    AppSettings.defaultLockScreenRightIconColor
 
   var body: some View {
     HStack(spacing: 0) {
@@ -112,7 +114,9 @@ struct LockHUDView: View {
       sideRegion(width: rightSideWidth, isLeading: false) {
         Image(systemName: LockScreenRightIconResolver.symbol(for: rightIconName))
           .font(.system(size: 13, weight: .semibold))
-          .foregroundStyle(rightIconColor.opacity(0.92))
+          .foregroundStyle(
+            LockScreenRightIconResolver.color(for: rightIconColorName).opacity(0.92)
+          )
       }
       .frame(width: rightSideWidth, height: height)
     }

@@ -209,6 +209,12 @@ Expanded-playing durumda waveform ve progress iki ayrı 30 Hz `TimelineView` ça
 - Progress genişliğini hesaplamakta,
 - SwiftUI AttributeGraph ve layout çalışmasını tetiklemektedir.
 
+Uygulama notu (15 Eylül 2026): Waveform ve kompakt marquee 15 Hz cadence ile
+çalışırken, expanded paneldeki marquee görünür adım etkisini azaltmak için ayrı
+bir 60 Hz animation timeline kullanmaktadır. Bu değişiklik için aynı cihaz ve
+senaryoda karşılaştırmalı Instruments ölçümü alınamadığından, burada bir CPU veya
+wakeup iyileşmesi iddiası yapılmamaktadır.
+
 SwiftUI `minimumInterval` değerini timeline güncellemeleri arasındaki alt sınır olarak kullanmaktadır:
 
 - <https://developer.apple.com/documentation/swiftui/timelineschedule/animation%28minimuminterval%3Apaused%3A%29>
