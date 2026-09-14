@@ -265,4 +265,24 @@ final class LayoutAndSettingsTests: XCTestCase {
       LockScreenRightIconColorOption.white.color
     )
   }
+
+  func testLockScreenRightIconColorsIncludeAppleSystemPalette() {
+    let expectedSystemColors: [LockScreenRightIconColorOption] = [
+      .red, .orange, .yellow, .mint, .teal, .cyan, .blue, .indigo, .purple, .pink, .brown, .gray,
+    ]
+
+    XCTAssertEqual(expectedSystemColors.count, 12)
+    XCTAssertEqual(
+      Set(LockScreenRightIconColorOption.allCases),
+      Set([.white, .accent, .green] + expectedSystemColors)
+    )
+
+    for option in expectedSystemColors {
+      XCTAssertEqual(
+        LockScreenRightIconResolver.color(for: option.rawValue),
+        option.color,
+        "Resolver should support the \(option.rawValue) system color"
+      )
+    }
+  }
 }

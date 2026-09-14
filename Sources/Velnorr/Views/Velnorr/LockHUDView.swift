@@ -1,3 +1,4 @@
+import AppKit
 import SwiftUI
 
 enum LockScreenRightIconOption: String, CaseIterable, Identifiable {
@@ -17,7 +18,19 @@ enum LockScreenRightIconOption: String, CaseIterable, Identifiable {
 enum LockScreenRightIconColorOption: String, CaseIterable, Identifiable {
   case white
   case accent
+  case red
+  case orange
+  case yellow
   case green
+  case mint
+  case teal
+  case cyan
+  case blue
+  case indigo
+  case purple
+  case pink
+  case brown
+  case gray
 
   var id: String { rawValue }
 
@@ -25,7 +38,19 @@ enum LockScreenRightIconColorOption: String, CaseIterable, Identifiable {
     switch self {
     case .white: .white
     case .accent: .accentColor
+    case .red: Color(nsColor: .systemRed)
+    case .orange: Color(nsColor: .systemOrange)
+    case .yellow: Color(nsColor: .systemYellow)
     case .green: .green
+    case .mint: Color(nsColor: .systemMint)
+    case .teal: Color(nsColor: .systemTeal)
+    case .cyan: Color(nsColor: .systemCyan)
+    case .blue: Color(nsColor: .systemBlue)
+    case .indigo: Color(nsColor: .systemIndigo)
+    case .purple: Color(nsColor: .systemPurple)
+    case .pink: Color(nsColor: .systemPink)
+    case .brown: Color(nsColor: .systemBrown)
+    case .gray: Color(nsColor: .systemGray)
     }
   }
 
@@ -33,7 +58,19 @@ enum LockScreenRightIconColorOption: String, CaseIterable, Identifiable {
     switch self {
     case .white: "White"
     case .accent: "Accent"
+    case .red: "Red"
+    case .orange: "Orange"
+    case .yellow: "Yellow"
     case .green: "Green"
+    case .mint: "Mint"
+    case .teal: "Teal"
+    case .cyan: "Cyan"
+    case .blue: "Blue"
+    case .indigo: "Indigo"
+    case .purple: "Purple"
+    case .pink: "Pink"
+    case .brown: "Brown"
+    case .gray: "Gray"
     }
   }
 }

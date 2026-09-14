@@ -1,4 +1,16 @@
 /* English is the fallback language. */
+"Red" = "Red";
+"Orange" = "Orange";
+"Yellow" = "Yellow";
+"Mint" = "Mint";
+"Teal" = "Teal";
+"Cyan" = "Cyan";
+"Blue" = "Blue";
+"Indigo" = "Indigo";
+"Purple" = "Purple";
+"Pink" = "Pink";
+"Brown" = "Brown";
+"Gray" = "Gray";
 "Settings" = "Settings";
 "Screen locked" = "Screen locked";
 "Quit Velnorr" = "Quit Velnorr";
