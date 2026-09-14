@@ -28,6 +28,8 @@
 	<true/>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>Velnorr uses Apple Events to read and control supported music players.</string>
+	<key>NSBluetoothAlwaysUsageDescription</key>
+	<string>Velnorr uses Bluetooth to show connected device notifications and battery status.</string>
 	<key>NSHighResolutionCapable</key>
 	<true/>
 </dict>
