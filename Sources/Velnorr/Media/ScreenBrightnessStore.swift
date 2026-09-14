@@ -12,6 +12,7 @@ final class ScreenBrightnessStore: ObservableObject {
   private let eventTap = SystemBrightnessEventTap()
   private let displayController = DisplayBrightnessController()
   private var hideTask: Task<Void, Never>?
+  private var eventTapRetryTask: Task<Void, Never>?
   private var brightnessObserver: NSObjectProtocol?
 
   init() {
@@ -29,13 +30,13 @@ final class ScreenBrightnessStore: ObservableObject {
 
   func start() {
     brightness = displayController.read() ?? brightness
-    eventTap.start { [weak self] event in
-      Task { @MainActor [weak self] in self?.apply(event) }
-    }
+    startEventTapWithRetry()
   }
 
   func stop() {
     eventTap.stop()
+    eventTapRetryTask?.cancel()
+    eventTapRetryTask = nil
     if let brightnessObserver {
       NotificationCenter.default.removeObserver(brightnessObserver)
       self.brightnessObserver = nil
@@ -78,6 +79,35 @@ final class ScreenBrightnessStore: ObservableObject {
     }
   }
 
+  private func startEventTapWithRetry() {
+    eventTapRetryTask?.cancel()
+    eventTapRetryTask = nil
+
+    let install: @MainActor () -> Bool = { [weak self] in
+      guard let self else { return false }
+      return self.eventTap.start { [weak self] event in
+        Task { @MainActor [weak self] in self?.apply(event) }
+      }
+    }
+
+    guard !install() else { return }
+
+    // Permissions can be granted in System Settings while Velnorr remains
+    // running. Retry briefly so the user does not need to quit and relaunch.
+    eventTapRetryTask = Task { @MainActor [weak self] in
+      for _ in 0..<30 {
+        try? await Task.sleep(for: .seconds(1))
+        guard !Task.isCancelled else { return }
+        guard let self else { return }
+        if install() {
+          self.eventTapRetryTask = nil
+          return
+        }
+      }
+      self?.eventTapRetryTask = nil
+    }
+  }
+
   private var hudDisplayDuration: Double {
     let value = UserDefaults.standard.double(forKey: "brightnessDisplayDuration")
     return value > 0 ? min(10, max(0.5, value)) : 1.6
@@ -91,12 +121,11 @@ private final class SystemBrightnessEventTap: @unchecked Sendable {
   private var runLoopSource: CFRunLoopSource?
   private var handler: ((SystemBrightnessEvent) -> Void)?
 
-  func start(onEvent: @escaping (SystemBrightnessEvent) -> Void) {
+  @discardableResult
+  @MainActor
+  func start(onEvent: @escaping (SystemBrightnessEvent) -> Void) -> Bool {
     stop()
-    let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
-    guard AXIsProcessTrustedWithOptions([promptKey: true] as CFDictionary),
-      CGPreflightListenEventAccess() || CGRequestListenEventAccess()
-    else { return }
+    guard SystemEventTapPermission.requestIfNeeded() else { return false }
     handler = onEvent
     guard
       let tap = CGEvent.tapCreate(
@@ -104,11 +133,12 @@ private final class SystemBrightnessEventTap: @unchecked Sendable {
         eventsOfInterest: CGEventMask(1 << 14), callback: systemBrightnessEventTapCallback,
         userInfo: Unmanaged.passUnretained(self).toOpaque()
       )
-    else { return }
+    else { return false }
     self.tap = tap
     runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
     if let runLoopSource { CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes) }
     CGEvent.tapEnable(tap: tap, enable: true)
+    return true
   }
 
   func stop() {

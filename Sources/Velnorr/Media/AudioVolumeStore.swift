@@ -12,6 +12,7 @@ final class AudioVolumeStore: ObservableObject {
   private let monitor = AudioOutputVolumeMonitor()
   private let eventTap = SystemVolumeEventTap()
   private var hideTask: Task<Void, Never>?
+  private var eventTapRetryTask: Task<Void, Never>?
   private var hasReceivedInitialValue = false
 
   func start() {
@@ -20,16 +21,14 @@ final class AudioVolumeStore: ObservableObject {
         self?.volumeDidChange(value)
       }
     }
-    eventTap.start { [weak self] event in
-      Task { @MainActor [weak self] in
-        self?.apply(event)
-      }
-    }
+    startEventTapWithRetry()
   }
 
   func stop() {
     monitor.stop()
     eventTap.stop()
+    eventTapRetryTask?.cancel()
+    eventTapRetryTask = nil
     hideTask?.cancel()
     hideTask = nil
     isVisible = false
@@ -74,6 +73,35 @@ final class AudioVolumeStore: ObservableObject {
   private var hudDisplayDuration: Double {
     let value = UserDefaults.standard.double(forKey: "volumeDisplayDuration")
     return value > 0 ? min(10, max(0.5, value)) : 1.6
+  }
+
+  private func startEventTapWithRetry() {
+    eventTapRetryTask?.cancel()
+    eventTapRetryTask = nil
+
+    let install: @MainActor () -> Bool = { [weak self] in
+      guard let self else { return false }
+      return self.eventTap.start { [weak self] event in
+        Task { @MainActor [weak self] in
+          self?.apply(event)
+        }
+      }
+    }
+
+    guard !install() else { return }
+
+    eventTapRetryTask = Task { @MainActor [weak self] in
+      for _ in 0..<30 {
+        try? await Task.sleep(for: .seconds(1))
+        guard !Task.isCancelled else { return }
+        guard let self else { return }
+        if install() {
+          self.eventTapRetryTask = nil
+          return
+        }
+      }
+      self?.eventTapRetryTask = nil
+    }
   }
 
   private func apply(_ event: SystemVolumeEvent) {
@@ -241,12 +269,11 @@ private final class SystemVolumeEventTap: @unchecked Sendable {
   private var runLoopSource: CFRunLoopSource?
   private var handler: ((SystemVolumeEvent) -> Void)?
 
-  func start(onEvent: @escaping (SystemVolumeEvent) -> Void) {
+  @discardableResult
+  @MainActor
+  func start(onEvent: @escaping (SystemVolumeEvent) -> Void) -> Bool {
     stop()
-    let accessibilityPromptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
-    let accessibilityOptions = [accessibilityPromptKey: true] as CFDictionary
-    guard AXIsProcessTrustedWithOptions(accessibilityOptions) else { return }
-    guard CGPreflightListenEventAccess() || CGRequestListenEventAccess() else { return }
+    guard SystemEventTapPermission.requestIfNeeded() else { return false }
 
     // `systemDefined` is not exposed by the Swift CoreGraphics overlay on
     // every SDK, but its Quartz event type is stable at raw value 14.
@@ -261,7 +288,7 @@ private final class SystemVolumeEventTap: @unchecked Sendable {
         callback: systemVolumeEventTapCallback,
         userInfo: Unmanaged.passUnretained(self).toOpaque()
       )
-    else { return }
+    else { return false }
 
     self.tap = tap
     runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
@@ -269,6 +296,7 @@ private final class SystemVolumeEventTap: @unchecked Sendable {
       CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes)
     }
     CGEvent.tapEnable(tap: tap, enable: true)
+    return true
   }
 
   func stop() {
