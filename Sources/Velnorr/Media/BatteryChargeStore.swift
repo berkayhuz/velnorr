@@ -4,6 +4,9 @@ import IOKit.ps
 
 @MainActor
 final class BatteryChargeStore: ObservableObject {
+  static let fallbackPollingInterval: TimeInterval = 60
+  static let fallbackPollingTolerance: TimeInterval = 6
+
   enum HUDMode: Equatable { case charging, unplugged, low, full, threshold }
   @Published private(set) var isVisible = false
   @Published private(set) var level = 0
@@ -11,9 +14,11 @@ final class BatteryChargeStore: ObservableObject {
   @Published private(set) var mode: HUDMode = .charging
 
   private var timer: Timer?
+  private var powerSourceRunLoopSource: CFRunLoopSource?
   private var hideTask: Task<Void, Never>?
   private var lastSnapshot: Snapshot?
   private var previewTask: Task<Void, Never>?
+  private var isStarted = false
 
   init(preview: Bool = PreviewMode.battery) {
     if preview {
@@ -34,6 +39,7 @@ final class BatteryChargeStore: ObservableObject {
 
   func start() {
     stop()
+    isStarted = true
     if PreviewMode.battery {
       level = PreviewMode.lowBattery ? 15 : (PreviewMode.fullCharge ? 100 : 64)
       isCharging = !PreviewMode.batteryUnplugged
@@ -50,16 +56,19 @@ final class BatteryChargeStore: ObservableObject {
       if PreviewMode.batteryThreshold { startThresholdPreview() }
       return
     }
+
     refresh(showOnChange: false)
-    let timer = Timer(
-      timeInterval: 1, target: self, selector: #selector(tick), userInfo: nil, repeats: true)
-    RunLoop.main.add(timer, forMode: .common)
-    self.timer = timer
+    installPowerSourceMonitoring()
   }
 
   func stop() {
+    isStarted = false
     timer?.invalidate()
     timer = nil
+    if let powerSourceRunLoopSource {
+      CFRunLoopRemoveSource(CFRunLoopGetMain(), powerSourceRunLoopSource, .commonModes)
+      self.powerSourceRunLoopSource = nil
+    }
     hideTask?.cancel()
     hideTask = nil
     previewTask?.cancel()
@@ -97,27 +106,62 @@ final class BatteryChargeStore: ObservableObject {
     refresh(showOnChange: true)
   }
 
+  private func installPowerSourceMonitoring() {
+    let context = Unmanaged.passUnretained(self).toOpaque()
+    if let source = IOPSNotificationCreateRunLoopSource(
+      batteryPowerSourceCallback,
+      context
+    ) {
+      let retainedSource = source.takeRetainedValue()
+      CFRunLoopAddSource(CFRunLoopGetMain(), retainedSource, .commonModes)
+      powerSourceRunLoopSource = retainedSource
+      return
+    }
+
+    let timer = Timer(
+      timeInterval: Self.fallbackPollingInterval,
+      target: self,
+      selector: #selector(tick),
+      userInfo: nil,
+      repeats: true
+    )
+    timer.tolerance = Self.fallbackPollingTolerance
+    RunLoop.main.add(timer, forMode: .common)
+    self.timer = timer
+  }
+
   private func refresh(showOnChange: Bool) {
+    guard isStarted else { return }
     guard let snapshot = Self.readSnapshot() else { return }
-    let changed = lastSnapshot != nil && snapshot != lastSnapshot
     let previous = lastSnapshot
     lastSnapshot = snapshot
-    level = snapshot.level
-    isCharging = snapshot.isPluggedIn
+    let nextMode: HUDMode
     if snapshot.level == 100, previous?.level != 100 {
-      mode = .full
+      nextMode = .full
     } else if snapshot.level < lowBatteryThreshold,
       (previous?.level ?? lowBatteryThreshold) >= lowBatteryThreshold
     {
-      mode = .low
+      nextMode = .low
     } else if let previous,
       (previous.level < greenBatteryThreshold) != (snapshot.level < greenBatteryThreshold)
     {
-      mode = .threshold
+      nextMode = .threshold
     } else {
-      mode = snapshot.isPluggedIn ? .charging : .unplugged
+      nextMode = snapshot.isPluggedIn ? .charging : .unplugged
     }
-    guard showOnChange, changed, isModeEnabled(mode) else { return }
+
+    if level != snapshot.level {
+      level = snapshot.level
+    }
+    if isCharging != snapshot.isCharging {
+      isCharging = snapshot.isCharging
+    }
+    if mode != nextMode {
+      mode = nextMode
+    }
+    guard showOnChange, previous != nil, previous != snapshot, isModeEnabled(nextMode) else {
+      return
+    }
 
     isVisible = true
     hideTask?.cancel()
@@ -200,5 +244,19 @@ final class BatteryChargeStore: ObservableObject {
       )
     }
     return nil
+  }
+}
+
+private func batteryPowerSourceCallback(_ context: UnsafeMutableRawPointer?) {
+  guard let context else { return }
+  let store = Unmanaged<BatteryChargeStore>.fromOpaque(context).takeUnretainedValue()
+  Task { @MainActor [weak store] in
+    store?.refreshFromPowerSourceNotification()
+  }
+}
+
+extension BatteryChargeStore {
+  fileprivate func refreshFromPowerSourceNotification() {
+    refresh(showOnChange: true)
   }
 }
