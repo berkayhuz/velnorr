@@ -8,6 +8,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   private let runtime = VelnorrRuntime()
   private var velnorrWindows: [VelnorrWindow] = []
   private var lockScreenWindows: [VelnorrLockScreenWindow] = []
+  private var lockScreenSpaceManager: VelnorrLockScreenSpaceManager?
   private var screenObserver: NSObjectProtocol?
   private var activeSpaceObserver: NSObjectProtocol?
   private var settingsObserver: NSObjectProtocol?
@@ -131,6 +132,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     lockScreenReorderTask?.cancel()
     lockScreenReorderTask = nil
     lockScreenReorderTaskIdentifier = nil
+    lockScreenSpaceManager?.stop()
+    lockScreenSpaceManager = nil
     if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
     if let activeSpaceObserver {
       NSWorkspace.shared.notificationCenter.removeObserver(activeSpaceObserver)
@@ -279,6 +282,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private func rebuildVelnorrs() {
+    if runtime.screenLock.isLocked, lockScreenSpaceManager == nil {
+      lockScreenSpaceManager = VelnorrLockScreenSpaceManager()
+    }
+
     velnorrWindows.forEach { $0.close() }
     velnorrWindows.removeAll()
 
@@ -297,6 +304,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     if runtime.screenLock.isLocked {
       rebuildLockScreenWindows()
+      moveLockedWindowsToLockSpace()
     }
   }
 
@@ -330,6 +338,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     if runtime.screenLock.isLocked {
       rebuildLockScreenWindows()
+      moveLockedWindowsToLockSpace()
     }
   }
 
@@ -352,6 +361,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     if !isLocked {
       lockScreenWindows.forEach { $0.close() }
       lockScreenWindows.removeAll()
+      lockScreenSpaceManager?.stop()
+      lockScreenSpaceManager = nil
     }
   }
 
@@ -365,7 +376,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       lockScreenWindows.append(window)
       window.orderFrontRegardless()
     }
+    moveLockedWindowsToLockSpace()
     scheduleLockScreenReorder()
+  }
+
+  private func moveLockedWindowsToLockSpace() {
+    guard runtime.screenLock.isLocked, let lockScreenSpaceManager else { return }
+    velnorrWindows.forEach { lockScreenSpaceManager.moveToLockScreen($0) }
+    lockScreenWindows.forEach { lockScreenSpaceManager.moveToLockScreen($0) }
   }
 
   private func scheduleLockScreenReorder() {
@@ -390,6 +408,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       }
 
       guard let self, !Task.isCancelled, self.runtime.screenLock.isLocked else { return }
+      self.moveLockedWindowsToLockSpace()
       self.velnorrWindows.forEach { $0.orderFrontRegardless() }
       self.lockScreenWindows.forEach { $0.orderFrontRegardless() }
     }

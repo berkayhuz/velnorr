@@ -49,7 +49,21 @@ final class ScreenLockStoreTests: XCTestCase {
   func testLockScreenWindowLevelUsesMaximumWindowLevel() {
     XCTAssertEqual(
       VelnorrWindowLevel.lockScreen.rawValue,
-      Int(CGWindowLevelForKey(.maximumWindow))
+      Int(Int32.max - 2)
+    )
+  }
+
+  func testLockScreenSpaceUsesTheSystemLockScreenLevel() {
+    XCTAssertEqual(VelnorrLockScreenSpaceManager.lockScreenSpaceLevel, 400)
+  }
+
+  func testSkyLightUsesVersionIndependentFrameworkPathFirst() {
+    XCTAssertEqual(
+      VelnorrLockScreenSpaceManager.skyLightFrameworkPaths,
+      [
+        "/System/Library/PrivateFrameworks/SkyLight.framework/SkyLight",
+        "/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/SkyLight",
+      ]
     )
   }
 }
