@@ -79,6 +79,7 @@ struct VelnorrOnboardingView: View {
     }
     .frame(minWidth: 560, minHeight: 500)
     .environment(\.layoutDirection, isRightToLeft ? .rightToLeft : .leftToRight)
+    .background(onboardingBackground)
     .onAppear(perform: refreshPermissions)
     .onReceive(
       Timer.publish(every: 1, on: .main, in: .common).autoconnect()
@@ -93,13 +94,13 @@ struct VelnorrOnboardingView: View {
         brandLogo
 
         Text("Velnorr")
-          .font(.system(size: 30, weight: .regular, design: .default))
+          .font(.system(size: 36, weight: .regular, design: .rounded))
           .foregroundStyle(.primary)
           .lineLimit(1)
       }
 
       Text(L("Your Dynamic Island for macOS"))
-        .font(.system(size: 16, weight: .regular, design: .default))
+        .font(.system(size: 14, weight: .regular, design: .rounded))
         .foregroundStyle(.secondary)
         .lineLimit(2)
         .fixedSize(horizontal: false, vertical: true)
@@ -107,7 +108,11 @@ struct VelnorrOnboardingView: View {
     .frame(maxWidth: .infinity, alignment: .center)
     .padding(.horizontal, 32)
     .padding(.vertical, 36)
-    .background(Color(nsColor: .windowBackgroundColor))
+    .background(onboardingBackground)
+  }
+
+  private var onboardingBackground: Color {
+    Color(red: 30.0 / 255.0, green: 30.0 / 255.0, blue: 30.0 / 255.0)
   }
 
   private var brandLogo: some View {
@@ -126,7 +131,7 @@ struct VelnorrOnboardingView: View {
           .background(.white)
       }
     }
-    .frame(width: 50, height: 50)
+    .frame(width: 64, height: 64)
     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
   }
 
