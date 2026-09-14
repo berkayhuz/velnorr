@@ -23,9 +23,12 @@ final class VelnorrLockScreenWindow: NSPanel {
     isOpaque = false
     backgroundColor = .clear
     hasShadow = false
+    // AppKit defaults this to false, which prevents the panel from being
+    // displayed by loginwindow after the session is locked.
+    canBecomeVisibleWithoutLogin = true
     // The lock-screen widget must remain above the system lock surface while
     // its SwiftUI view limits interaction to media controls.
-    level = .screenSaver
+    level = VelnorrWindowLevel.lockScreen
     collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
     hidesOnDeactivate = false
     isFloatingPanel = true

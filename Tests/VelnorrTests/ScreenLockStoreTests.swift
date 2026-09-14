@@ -1,3 +1,5 @@
+import AppKit
+import CoreGraphics
 import XCTest
 @testable import Velnorr
 
@@ -41,6 +43,13 @@ final class ScreenLockStoreTests: XCTestCase {
     XCTAssertEqual(
       ScreenLockStore.screenUnlockedNotification.rawValue,
       "com.apple.screenIsUnlocked"
+    )
+  }
+
+  func testLockScreenWindowLevelIsAboveShieldingLevel() {
+    XCTAssertGreaterThan(
+      VelnorrWindowLevel.lockScreen.rawValue,
+      Int(CGShieldingWindowLevel())
     )
   }
 }

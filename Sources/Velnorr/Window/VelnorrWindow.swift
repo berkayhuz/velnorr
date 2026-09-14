@@ -365,12 +365,15 @@ final class VelnorrWindow: NSWindow {
 
   private func updateScreenLock(_ locked: Bool) {
     isScreenLocked = locked
-    level = locked ? .screenSaver : .statusBar
     if locked {
+      canBecomeVisibleWithoutLogin = true
+      level = VelnorrWindowLevel.lockScreen
       stopMousePolling()
       ignoresMouseEvents = true
       updatePointerInsideState(false)
     } else {
+      canBecomeVisibleWithoutLogin = false
+      level = .statusBar
       refreshMouseState()
     }
   }
