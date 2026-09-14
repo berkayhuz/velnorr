@@ -26,14 +26,14 @@ struct CompactPlaybackControl: View {
           height: 20
         )
         .blur(
-          radius: isHovered ? 1.8 : 0
+          radius: isHovered ? 2.2 : 0
         )
         .opacity(
-          isHovered ? 0.58 : 1
+          isHovered ? 0.5 : 1
         )
         .shadow(
           color: Color(nsColor: status.accentColor)
-            .opacity(isHovered ? 0.64 : 0),
+            .opacity(isHovered ? 0.72 : 0),
           radius: 5.5
         )
       }
