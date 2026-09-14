@@ -13,6 +13,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   private var settingsObserver: NSObjectProtocol?
   private var openSettingsObserver: NSObjectProtocol?
   private var screenLockObserver: NSObjectProtocol?
+  private var lockScreenReorderTask: Task<Void, Never>?
+  private var lockScreenReorderTaskIdentifier: UUID?
   private var clickMonitors: [Any] = []
   private var appliedSettings: AppSettingsSnapshot?
   private var settingsWindow: NSWindow?
@@ -126,6 +128,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   func applicationWillTerminate(_ notification: Notification) {
     runtime.stop()
+    lockScreenReorderTask?.cancel()
+    lockScreenReorderTask = nil
+    lockScreenReorderTaskIdentifier = nil
     if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
     if let activeSpaceObserver {
       NSWorkspace.shared.notificationCenter.removeObserver(activeSpaceObserver)
@@ -337,6 +342,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     renderedScreenLockState = isLocked
+    if !isLocked {
+      lockScreenReorderTask?.cancel()
+      lockScreenReorderTask = nil
+      lockScreenReorderTaskIdentifier = nil
+    }
     rebuildVelnorrs()
 
     if !isLocked {
@@ -354,6 +364,34 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       let window = VelnorrLockScreenWindow(screen: screen, runtime: runtime)
       lockScreenWindows.append(window)
       window.orderFrontRegardless()
+    }
+    scheduleLockScreenReorder()
+  }
+
+  private func scheduleLockScreenReorder() {
+    lockScreenReorderTask?.cancel()
+
+    let identifier = UUID()
+    lockScreenReorderTaskIdentifier = identifier
+    lockScreenReorderTask = Task { @MainActor [weak self] in
+      defer {
+        if let self, self.lockScreenReorderTaskIdentifier == identifier {
+          self.lockScreenReorderTask = nil
+          self.lockScreenReorderTaskIdentifier = nil
+        }
+      }
+
+      do {
+        // loginwindow finishes its lock transition after the lock notification;
+        // reorder once after that hand-off instead of polling indefinitely.
+        try await Task.sleep(for: .milliseconds(750))
+      } catch {
+        return
+      }
+
+      guard let self, !Task.isCancelled, self.runtime.screenLock.isLocked else { return }
+      self.velnorrWindows.forEach { $0.orderFrontRegardless() }
+      self.lockScreenWindows.forEach { $0.orderFrontRegardless() }
     }
   }
 

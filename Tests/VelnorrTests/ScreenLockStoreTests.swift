@@ -46,10 +46,10 @@ final class ScreenLockStoreTests: XCTestCase {
     )
   }
 
-  func testLockScreenWindowLevelIsAboveShieldingLevel() {
-    XCTAssertGreaterThan(
+  func testLockScreenWindowLevelUsesMaximumWindowLevel() {
+    XCTAssertEqual(
       VelnorrWindowLevel.lockScreen.rawValue,
-      Int(CGShieldingWindowLevel())
+      Int(CGWindowLevelForKey(.maximumWindow))
     )
   }
 }
