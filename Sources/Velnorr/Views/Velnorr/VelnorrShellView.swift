@@ -547,6 +547,13 @@ struct VelnorrShellView: View {
         )
       ) { notification in
 
+        let notificationDisplayID =
+          (notification.userInfo?["displayID"] as? NSNumber)?.uint32Value
+        guard VelnorrMousePolicy.acceptsPointerNotification(
+          displayID: notificationDisplayID,
+          targetDisplayID: metrics.displayID
+        ) else { return }
+
         guard
           let inside =
             notification.userInfo?["inside"] as? Bool

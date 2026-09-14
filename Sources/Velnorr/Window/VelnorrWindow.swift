@@ -24,12 +24,14 @@ final class VelnorrWindow: NSWindow {
 
   private var velnorrHitPath: CGPath = CGMutablePath()
   private var mouseMonitors: [Any] = []
+  private var hasGlobalMouseMonitor = false
   private var mouseTrackingTimer: Timer?
   private var mousePollingRate: MousePollingRate?
   private var pointerInsideVelnorr = false
   private var isMediaInteractive = false
   private var isCapsLockInteractive = false
   private var velnorrLayoutRect = CGRect.zero
+  private var pillInteractionPath: CGPath?
   private let displayMode: VelnorrDisplayMode
   private let displayID: CGDirectDisplayID
 
@@ -212,6 +214,19 @@ final class VelnorrWindow: NSWindow {
       bottomRadius: bottomRadius,
       isPill: displayMode == .pill
     )
+    pillInteractionPath = displayMode == .pill
+      ? CGPath(
+        roundedRect: CGRect(
+          x: (NotchMetrics.canvasWidth - NotchMetrics.nowPlayingWidth) / 2,
+          y: 0,
+          width: NotchMetrics.nowPlayingWidth,
+          height: NotchMetrics.nowPlayingHeight
+        ),
+        cornerWidth: NotchMetrics.nowPlayingRadius,
+        cornerHeight: NotchMetrics.nowPlayingRadius,
+        transform: nil
+      )
+      : nil
 
     updateMousePassthrough()
   }
@@ -228,6 +243,7 @@ final class VelnorrWindow: NSWindow {
       }
     ) {
       mouseMonitors.append(monitor)
+      hasGlobalMouseMonitor = true
     }
 
     if let monitor = NSEvent.addLocalMonitorForEvents(
@@ -241,8 +257,7 @@ final class VelnorrWindow: NSWindow {
     }
 
     // Global mouse-moved monitors can be unavailable without Accessibility
-    // permission. Adaptive polling preserves passthrough behavior without
-    // waking the process at display-refresh frequency for its entire lifetime.
+    // permission. Poll only in that fallback case.
     updateMousePolling()
   }
 
@@ -255,6 +270,11 @@ final class VelnorrWindow: NSWindow {
   }
 
   private func updateMousePolling() {
+    guard !isMediaInteractive, !hasGlobalMouseMonitor else {
+      stopMousePolling()
+      return
+    }
+
     let proximityFrame = frame.insetBy(dx: -80, dy: -80)
     let desiredRate: MousePollingRate =
       proximityFrame.contains(NSEvent.mouseLocation)
@@ -296,10 +316,13 @@ final class VelnorrWindow: NSWindow {
       && containsCapsLockInteractionRegion(atScreenPoint: screenPoint)
     let inside = insideSurface || insideCapsLock
 
-    ignoresMouseEvents = VelnorrMousePolicy.ignoresMouseEvents(
+    let shouldIgnoreMouseEvents = VelnorrMousePolicy.ignoresMouseEvents(
       isMediaExpanded: isMediaInteractive,
       pointerInsideShape: inside
     )
+    if ignoresMouseEvents != shouldIgnoreMouseEvents {
+      ignoresMouseEvents = shouldIgnoreMouseEvents
+    }
 
     if isMediaInteractive {
       updatePointerInsideState(true)
@@ -331,7 +354,7 @@ final class VelnorrWindow: NSWindow {
     NotificationCenter.default.post(
       name: .velnorrPointerInsideChanged,
       object: nil,
-      userInfo: ["inside": inside]
+      userInfo: ["inside": inside, "displayID": displayID]
     )
   }
 
@@ -346,23 +369,10 @@ final class VelnorrWindow: NSWindow {
   }
 
   private func containsPillInteractionRegion(atScreenPoint screenPoint: NSPoint) -> Bool {
+    guard let pillInteractionPath else { return false }
     let windowPoint = convertPoint(fromScreen: screenPoint)
     let topLeftPoint = CGPoint(x: windowPoint.x, y: frame.height - windowPoint.y)
-    let width = NotchMetrics.nowPlayingWidth
-    let height = NotchMetrics.nowPlayingHeight
-    let rect = CGRect(
-      x: (NotchMetrics.canvasWidth - width) / 2,
-      y: 0,
-      width: width,
-      height: height
-    )
-    let path = CGPath(
-      roundedRect: rect,
-      cornerWidth: NotchMetrics.nowPlayingRadius,
-      cornerHeight: NotchMetrics.nowPlayingRadius,
-      transform: nil
-    )
-    return path.contains(topLeftPoint)
+    return pillInteractionPath.contains(topLeftPoint)
   }
 }
 
