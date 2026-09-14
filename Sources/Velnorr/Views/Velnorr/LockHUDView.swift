@@ -9,20 +9,20 @@ struct LockHUDView: View {
 
   var body: some View {
     HStack(spacing: 0) {
-      Color.clear
-        .frame(width: leftSideWidth)
-
-      Color.clear
-        .frame(width: centerGap)
-        .allowsHitTesting(false)
-
-      sideRegion {
+      sideRegion(width: leftSideWidth, isLeading: true) {
         Image(systemName: "lock.fill")
           .font(.system(size: 13, weight: .semibold))
           .foregroundStyle(.white.opacity(0.92))
           .accessibilityLabel(AppLanguage.selected.localized("Screen locked"))
       }
-      .frame(width: rightSideWidth, height: height)
+      .frame(width: leftSideWidth, height: height)
+
+      Color.clear
+        .frame(width: centerGap)
+        .allowsHitTesting(false)
+
+      Color.clear
+        .frame(width: rightSideWidth)
     }
     .frame(height: height)
     .accessibilityElement(children: .ignore)
@@ -31,19 +31,29 @@ struct LockHUDView: View {
   }
 
   private func sideRegion<Content: View>(
+    width: CGFloat,
+    isLeading: Bool,
     @ViewBuilder content: () -> Content
   ) -> some View {
     let isFloatingPill = centerGap == 0
-    let edgeInset = min(12, max(8, rightSideWidth / 2 - 10))
+    let edgeInset = min(12, max(8, width / 2 - 10))
+    let iconX: CGFloat
+    if isFloatingPill {
+      iconX = isLeading
+        ? topRadius + edgeInset
+        : width - topRadius - edgeInset
+    } else {
+      iconX = isLeading
+        ? (topRadius + width) / 2
+        : (width - topRadius) / 2
+    }
     return ZStack {
       content()
         .position(
-          x: isFloatingPill
-            ? rightSideWidth - topRadius - edgeInset
-            : (rightSideWidth - topRadius) / 2,
+          x: iconX,
           y: height / 2
         )
     }
-    .frame(width: rightSideWidth, height: height)
+    .frame(width: width, height: height)
   }
 }

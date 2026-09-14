@@ -1,9 +1,6 @@
 import SwiftUI
 
 struct LockedMusicWidgetView: View {
-  private let widgetWidth: CGFloat = 440
-  private let widgetHeight: CGFloat = 190
-
   let runtime: VelnorrRuntime
   let onTrackAvailabilityChange: (Bool) -> Void
 
@@ -31,29 +28,48 @@ struct LockedMusicWidgetView: View {
   }
 
   var body: some View {
+    widgetSurface
+      .contentShape(roundedWidgetShape)
+      .accessibilityElement(children: .contain)
+      .onAppear {
+        onTrackAvailabilityChange(music.status.hasTrack)
+      }
+      .onChange(of: music.status.hasTrack) { hasTrack in
+        onTrackAvailabilityChange(hasTrack)
+      }
+  }
+
+  @ViewBuilder
+  private var widgetContent: some View {
     Group {
       if music.status.hasTrack {
         lockedNowPlayingView
       }
     }
-    .frame(width: widgetWidth, height: widgetHeight)
-    .background(
-      Color.white.opacity(0.30),
-      in: RoundedRectangle(cornerRadius: 24, style: .continuous)
+    .frame(
+      width: VelnorrLockScreenLayout.widgetSize.width,
+      height: VelnorrLockScreenLayout.widgetSize.height
     )
-    .overlay {
-      RoundedRectangle(cornerRadius: 24, style: .continuous)
-        .stroke(Color.white.opacity(0.14), lineWidth: 1)
+  }
+
+  @ViewBuilder
+  private var widgetSurface: some View {
+    if #available(macOS 26.0, *) {
+      widgetContent
+        .glassEffect(
+          .regular.interactive(true),
+          in: roundedWidgetShape
+        )
+    } else {
+      // macOS 13–25 do not provide Liquid Glass. Keep the surface system
+      // rendered on those versions without reproducing the effect manually.
+      widgetContent
+        .background(.ultraThinMaterial, in: roundedWidgetShape)
     }
-    .shadow(color: .black.opacity(0.14), radius: 18, y: 8)
-    .contentShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
-    .accessibilityElement(children: .contain)
-    .onAppear {
-      onTrackAvailabilityChange(music.status.hasTrack)
-    }
-    .onChange(of: music.status.hasTrack) { hasTrack in
-      onTrackAvailabilityChange(hasTrack)
-    }
+  }
+
+  private var roundedWidgetShape: RoundedRectangle {
+    RoundedRectangle(cornerRadius: 24, style: .continuous)
   }
 
   private func togglePlayback() {
@@ -92,7 +108,10 @@ struct LockedMusicWidgetView: View {
       allowsExternalNavigation: false,
       allowsAudioOutput: false
     )
-    .frame(width: widgetWidth - 24, height: widgetHeight - 15)
+    .frame(
+      width: VelnorrLockScreenLayout.widgetSize.width - 24,
+      height: VelnorrLockScreenLayout.widgetSize.height - 15
+    )
     .padding(.top, 6)
   }
 }

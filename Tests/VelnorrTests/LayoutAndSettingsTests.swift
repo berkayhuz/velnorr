@@ -190,4 +190,14 @@ final class LayoutAndSettingsTests: XCTestCase {
     XCTAssertFalse(path.contains(CGPoint(x: 399, y: 174)))
     XCTAssertTrue(path.contains(CGPoint(x: 200, y: 100)))
   }
+
+  func testLockScreenWidgetLeaves36PointsAboveProfilePhotoAnchor() {
+    let screenFrame = CGRect(x: -20, y: -10, width: 1470, height: 956)
+    let widgetFrame = VelnorrLockScreenLayout.widgetFrame(for: screenFrame)
+    let profilePhotoTop = VelnorrLockScreenLayout.profilePhotoTop(in: screenFrame)
+
+    XCTAssertEqual(widgetFrame.minY - profilePhotoTop, 36, accuracy: 0.001)
+    XCTAssertEqual(widgetFrame.midX, screenFrame.midX, accuracy: 0.001)
+    XCTAssertEqual(widgetFrame.size, VelnorrLockScreenLayout.widgetSize)
+  }
 }

@@ -2,16 +2,8 @@ import AppKit
 import SwiftUI
 
 final class VelnorrLockScreenWindow: NSPanel {
-  private let widgetSize = NSSize(width: 440, height: 190)
-
   init(screen: NSScreen, runtime: VelnorrRuntime) {
-    let visibleFrame = screen.visibleFrame
-    let frame = CGRect(
-      x: screen.frame.midX - widgetSize.width / 2,
-      y: visibleFrame.minY + visibleFrame.height * 0.26,
-      width: widgetSize.width,
-      height: widgetSize.height
-    )
+    let frame = VelnorrLockScreenLayout.widgetFrame(for: screen.frame)
 
     super.init(
       contentRect: frame,
