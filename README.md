@@ -1,10 +1,10 @@
 <div align="center">
-  <img src="Sources/Velnorr/Resources/velnorr-logo.svg" width="180" alt="Velnorr logo" style="border-radius: 24px;">
-
+  <img src="Sources/Velnorr/Resources/velnorr-logo-curved.svg" width="180" alt="Velnorr logo" style="border-radius: 24px;">
+  
   <h1>Velnorr - DynamicIsland for macOS</h1>
 
   <p>A polished, responsive media and system status experience for the macOS menu bar.</p>
-
+  
   <p>
     <img src="https://img.shields.io/badge/platform-macOS%2013%2B-111827?style=flat-square&logo=apple&logoColor=white" alt="macOS 13+">
     <img src="https://img.shields.io/badge/Swift-6.0-F05138?style=flat-square&logo=swift&logoColor=white" alt="Swift 6.0">
