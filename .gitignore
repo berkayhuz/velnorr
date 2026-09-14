@@ -1,0 +1,43 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Xcode and Swift Package Manager build products
+.build/
+.swiftpm/
+DerivedData/
+build/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+*.xcuserstate
+
+# Generated distribution artifacts
+dist/
+
+# Local editor settings (keep shared launch configurations)
+.vscode/settings.json
+.vscode/tasks.json
+.idea/
+
+# Logs and local environment files
+*.log
+.env
+.env.*
+!.env.example
+
+# Signing and credential material
+*.p12
+*.p8
+*.mobileprovision
+*.cer
+*.certSigningRequest
+*.provisionprofile
+*.key
+*.pem
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+

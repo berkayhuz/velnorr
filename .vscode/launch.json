@@ -1,0 +1,24 @@
+{
+    "configurations": [
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:velnorr}",
+            "name": "Debug Velnorr",
+            "target": "Velnorr",
+            "configuration": "debug",
+            "preLaunchTask": "swift: Build Debug Velnorr"
+        },
+        {
+            "type": "swift",
+            "request": "launch",
+            "args": [],
+            "cwd": "${workspaceFolder:velnorr}",
+            "name": "Release Velnorr",
+            "target": "Velnorr",
+            "configuration": "release",
+            "preLaunchTask": "swift: Build Release Velnorr"
+        }
+    ]
+}
