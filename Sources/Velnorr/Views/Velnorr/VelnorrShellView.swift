@@ -8,6 +8,7 @@ struct VelnorrShellView: View {
   let onLayoutChange: ((CGRect, CGFloat, CGFloat) -> Void)?
   let onMediaExpandedChange: ((Bool) -> Void)?
   let onCapsLockVisibilityChange: ((Bool) -> Void)?
+  let onScreenLockChange: ((Bool) -> Void)?
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @AppStorage(AppSettings.expandOnHover) private var expandOnHover = true
   @AppStorage("volumeHUD") private var volumeHUDEnabled = true
@@ -50,6 +51,7 @@ struct VelnorrShellView: View {
   @ObservedObject private var capsLock: CapsLockStore
   @ObservedObject private var batteryCharge: BatteryChargeStore
   @ObservedObject private var bluetoothConnection: BluetoothConnectionStore
+  @ObservedObject private var screenLock: ScreenLockStore
   @State private var interaction = VelnorrInteractionState()
   @State private var isAutomaticTrackPeekVisible = false
   @State private var observedTrackKey = ""
@@ -64,22 +66,26 @@ struct VelnorrShellView: View {
     runtime: VelnorrRuntime,
     onLayoutChange: ((CGRect, CGFloat, CGFloat) -> Void)?,
     onMediaExpandedChange: ((Bool) -> Void)?,
-    onCapsLockVisibilityChange: ((Bool) -> Void)?
+    onCapsLockVisibilityChange: ((Bool) -> Void)?,
+    onScreenLockChange: ((Bool) -> Void)?
   ) {
     self.metrics = metrics
     self.runtime = runtime
     self.onLayoutChange = onLayoutChange
     self.onMediaExpandedChange = onMediaExpandedChange
     self.onCapsLockVisibilityChange = onCapsLockVisibilityChange
+    self.onScreenLockChange = onScreenLockChange
     _music = ObservedObject(wrappedValue: runtime.music)
     _audioVolume = ObservedObject(wrappedValue: runtime.audioVolume)
     _screenBrightness = ObservedObject(wrappedValue: runtime.screenBrightness)
     _capsLock = ObservedObject(wrappedValue: runtime.capsLock)
     _batteryCharge = ObservedObject(wrappedValue: runtime.batteryCharge)
     _bluetoothConnection = ObservedObject(wrappedValue: runtime.bluetoothConnection)
+    _screenLock = ObservedObject(wrappedValue: runtime.screenLock)
   }
 
   var body: some View {
+    let isScreenLocked = screenLock.isLocked
     let trackDetailsVisible = interaction.isArtworkHovered
       || (metrics.displayMode == .pill && interaction.isOuterHovered)
       || isAutomaticTrackPeekVisible
@@ -89,16 +95,19 @@ struct VelnorrShellView: View {
       && bluetoothConnection.isVisible
       && bluetoothConnection.device != nil
       && !interaction.isMediaExpanded
+      && !isScreenLocked
     let volumeOverlayVisible =
       volumeHUDEnabled
       && audioVolume.isVisible
       && !interaction.isMediaExpanded
       && !deviceOverlayVisible
+      && !isScreenLocked
     let batteryOverlayVisible =
       batteryHUDEnabled
       && notificationHUDEnabled
       && batteryCharge.isVisible && !interaction.isMediaExpanded && !deviceOverlayVisible
       && !volumeOverlayVisible
+      && !isScreenLocked
     let brightnessOverlayVisible =
       brightnessHUDEnabled
       && screenBrightness.isVisible
@@ -106,6 +115,7 @@ struct VelnorrShellView: View {
       && !deviceOverlayVisible
       && !volumeOverlayVisible
       && !batteryOverlayVisible
+      && !isScreenLocked
     let presentationState = currentPresentationState
     let layout = VelnorrLayout(
       state: presentationState,
@@ -379,8 +389,23 @@ struct VelnorrShellView: View {
             }
           }
           .opacity(
-            volumeOverlayVisible || brightnessOverlayVisible || batteryOverlayVisible
-              || deviceOverlayVisible ? 0 : 1)
+            isScreenLocked
+              ? 0
+              : (volumeOverlayVisible || brightnessOverlayVisible || batteryOverlayVisible
+                || deviceOverlayVisible ? 0 : 1)
+          )
+          .allowsHitTesting(!isScreenLocked)
+
+          if isScreenLocked {
+            LockHUDView(
+              centerGap: layout.centerGap,
+              leftSideWidth: layout.leftSideWidth,
+              rightSideWidth: layout.rightSideWidth,
+              height: layout.height,
+              topRadius: layout.topRadius
+            )
+            .transition(VelnorrTransition.content)
+          }
 
           if volumeOverlayVisible {
             VolumeHUDView(
@@ -460,7 +485,7 @@ struct VelnorrShellView: View {
       .overlay(alignment: .top) {
         CapsLockHUDView(
           isEnabled: capsLock.isEnabled,
-          isVisible: capsLockHUDEnabled && capsLock.isVisible,
+          isVisible: !isScreenLocked && capsLockHUDEnabled && capsLock.isVisible,
           surfaceColor: velnorrColor.opacity(velnorrOpacity),
           reduceMotion: reduceMotion || !animationsEnabled,
           diameter: CapsLockHUDMetrics.diameter(from: capsLockHUDSize)
@@ -519,6 +544,8 @@ struct VelnorrShellView: View {
         )
       ) { _ in
 
+        guard !screenLock.isLocked else { return }
+
         withAnimation(
           reduceMotion
             ? .easeOut(duration: 0.12)
@@ -533,6 +560,7 @@ struct VelnorrShellView: View {
           for: .velnorrCenterTapped
         )
       ) { notification in
+        guard !screenLock.isLocked else { return }
         guard
           let id = notification.userInfo?["displayID"] as? CGDirectDisplayID,
           id == metrics.displayID
@@ -554,6 +582,8 @@ struct VelnorrShellView: View {
           for: .velnorrPointerInsideChanged
         )
       ) { notification in
+
+        guard !screenLock.isLocked else { return }
 
         let notificationDisplayID =
           (notification.userInfo?["displayID"] as? NSNumber)?.uint32Value
@@ -597,6 +627,7 @@ struct VelnorrShellView: View {
       .onAppear {
         onMediaExpandedChange?(interaction.isMediaExpanded)
         onCapsLockVisibilityChange?(capsLockHUDEnabled && capsLock.isVisible)
+        onScreenLockChange?(screenLock.isLocked)
 
         reportLayout(
           horizontalOffset: layout.horizontalOffset,
@@ -626,6 +657,21 @@ struct VelnorrShellView: View {
         } else {
           cancelMediaAutoDismiss()
         }
+      }
+
+      .onChange(of: screenLock.isLocked) { locked in
+        onScreenLockChange?(locked)
+        guard locked else { return }
+
+        withAnimation(
+          animationsEnabled
+            ? VelnorrAnimation.surface(reduceMotion: reduceMotion)
+            : .easeOut(duration: 0.12)
+        ) {
+          interaction.dismiss()
+        }
+        isPointerInsideMedia = false
+        cancelMediaAutoDismiss()
       }
 
       .onChange(of: presentationState) { _ in
@@ -706,7 +752,8 @@ struct VelnorrShellView: View {
   }
 
   private var currentPresentationState: VelnorrPresentationState {
-    VelnorrPresentationResolver.resolve(
+    guard !screenLock.isLocked else { return .collapsed }
+    return VelnorrPresentationResolver.resolve(
       base: interaction.presentation,
       isMediaExpanded: interaction.isMediaExpanded,
       deviceEnabled: deviceHUDEnabled && notificationHUDEnabled,

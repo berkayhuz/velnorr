@@ -12,6 +12,7 @@ final class VelnorrRuntimeTests: XCTestCase {
     let capsLock = runtime.capsLock
     let batteryCharge = runtime.batteryCharge
     let bluetoothConnection = runtime.bluetoothConnection
+    let screenLock = runtime.screenLock
     let artworkService = runtime.artworkService
 
     XCTAssertTrue(music === runtime.music)
@@ -20,6 +21,7 @@ final class VelnorrRuntimeTests: XCTestCase {
     XCTAssertTrue(capsLock === runtime.capsLock)
     XCTAssertTrue(batteryCharge === runtime.batteryCharge)
     XCTAssertTrue(bluetoothConnection === runtime.bluetoothConnection)
+    XCTAssertTrue(screenLock === runtime.screenLock)
     XCTAssertTrue(artworkService === runtime.artworkService)
   }
 }

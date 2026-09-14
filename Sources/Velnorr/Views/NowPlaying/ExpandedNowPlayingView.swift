@@ -21,9 +21,55 @@ struct ExpandedNowPlayingView: View {
   let showShuffle: Bool
   let showAudioOutput: Bool
   let showPlaybackButton: Bool
+  let allowsExternalNavigation: Bool
+  let allowsAudioOutput: Bool
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @AppStorage("appearanceAnimations") private var animationsEnabled = true
   @State private var isShuffleEnabled = false
+
+  init(
+    status: MusicStatus,
+    onOpenSource: @escaping () -> Void,
+    onOpenTrack: @escaping () -> Void,
+    onOpenArtist: @escaping () -> Void,
+    onTogglePlayback: @escaping () -> Void,
+    onShuffle: @escaping () -> Void,
+    onPrevious: @escaping () -> Void,
+    onNext: @escaping () -> Void,
+    onAudioOutput: @escaping () -> Void,
+    onSeek: @escaping (TimeInterval) -> Void,
+    isFloatingPill: Bool,
+    showArtwork: Bool,
+    showApplicationIcon: Bool,
+    showProgress: Bool,
+    showTrackNavigation: Bool,
+    showShuffle: Bool,
+    showAudioOutput: Bool,
+    showPlaybackButton: Bool,
+    allowsExternalNavigation: Bool = true,
+    allowsAudioOutput: Bool = true
+  ) {
+    self.status = status
+    self.onOpenSource = onOpenSource
+    self.onOpenTrack = onOpenTrack
+    self.onOpenArtist = onOpenArtist
+    self.onTogglePlayback = onTogglePlayback
+    self.onShuffle = onShuffle
+    self.onPrevious = onPrevious
+    self.onNext = onNext
+    self.onAudioOutput = onAudioOutput
+    self.onSeek = onSeek
+    self.isFloatingPill = isFloatingPill
+    self.showArtwork = showArtwork
+    self.showApplicationIcon = showApplicationIcon
+    self.showProgress = showProgress
+    self.showTrackNavigation = showTrackNavigation
+    self.showShuffle = showShuffle
+    self.showAudioOutput = showAudioOutput
+    self.showPlaybackButton = showPlaybackButton
+    self.allowsExternalNavigation = allowsExternalNavigation
+    self.allowsAudioOutput = allowsAudioOutput
+  }
 
   var body: some View {
     GeometryReader { geometry in
@@ -67,6 +113,7 @@ struct ExpandedNowPlayingView: View {
           .offset(y: 3)
       }
       .buttonStyle(VelnorrButtonStyle())
+      .disabled(!allowsExternalNavigation)
       .accessibilityLabel("Open music source")
 
       VStack(alignment: .leading, spacing: 2) {
@@ -82,7 +129,7 @@ struct ExpandedNowPlayingView: View {
             pressedScale: 0.96
           )
         )
-        .disabled(!status.hasTrack)
+        .disabled(!status.hasTrack || !allowsExternalNavigation)
         .accessibilityLabel("Open song")
 
         if status.hasTrack {
@@ -99,7 +146,7 @@ struct ExpandedNowPlayingView: View {
               pressedScale: 0.96
             )
           )
-          .disabled(status.artist.isEmpty)
+          .disabled(status.artist.isEmpty || !allowsExternalNavigation)
           .accessibilityLabel("Open artist")
         }
       }
@@ -190,7 +237,7 @@ struct ExpandedNowPlayingView: View {
       } else {
         Spacer()
       }
-      if showAudioOutput {
+      if showAudioOutput && allowsAudioOutput {
         controlButton(
           symbol: "airplayaudio",
           size: 17,

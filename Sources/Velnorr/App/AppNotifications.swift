@@ -14,4 +14,5 @@ extension Notification.Name {
   static let velnorrPreviewMusic = Notification.Name("Velnorr.previewMusic")
   static let velnorrPlaybackTapped = Notification.Name("Velnorr.playbackTapped")
   static let velnorrBrightnessChanged = Notification.Name("Velnorr.brightnessChanged")
+  static let velnorrScreenLockChanged = Notification.Name("Velnorr.screenLockChanged")
 }

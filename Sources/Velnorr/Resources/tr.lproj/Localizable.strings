@@ -58,6 +58,7 @@
 "Version" = "Sürüm";
 "Build" = "Yapı";
 "Settings" = "Ayarlar";
+"Screen locked" = "Ekran kilitli";
 "Quit Velnorr" = "Velnorr'dan Çık";
 "Velnorr Settings" = "Velnorr Ayarları";
 "Motion" = "Hareket";

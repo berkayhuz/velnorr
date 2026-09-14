@@ -7,14 +7,17 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate {
   private let runtime = VelnorrRuntime()
   private var velnorrWindows: [VelnorrWindow] = []
+  private var lockScreenWindows: [VelnorrLockScreenWindow] = []
   private var screenObserver: NSObjectProtocol?
   private var activeSpaceObserver: NSObjectProtocol?
   private var settingsObserver: NSObjectProtocol?
   private var openSettingsObserver: NSObjectProtocol?
+  private var screenLockObserver: NSObjectProtocol?
   private var clickMonitors: [Any] = []
   private var appliedSettings: AppSettingsSnapshot?
   private var settingsWindow: NSWindow?
   private var onboardingWindow: NSWindow?
+  private var renderedScreenLockState = false
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     UserDefaults.standard.register(defaults: AppSettings.defaults)
@@ -22,8 +25,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     applyLaunchAtLogin(appliedSettings?.launchAtLogin ?? true)
     NSApp.setActivationPolicy(.accessory)
     terminateOtherInstances()
+
+    screenLockObserver = NotificationCenter.default.addObserver(
+      forName: .velnorrScreenLockChanged,
+      object: nil,
+      queue: .main
+    ) { [weak self] notification in
+      let isLocked = notification.userInfo?["isLocked"] as? Bool
+      Task { @MainActor [weak self] in
+        guard let isLocked else { return }
+        self?.updateScreenLock(isLocked)
+      }
+    }
+
     runtime.start()
     rebuildVelnorrs()
+    renderedScreenLockState = runtime.screenLock.isLocked
 
     if UserDefaults.standard.string(forKey: AppSettings.onboardingCompletedVersion)
       != currentAppVersion {
@@ -117,12 +134,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     if let openSettingsObserver {
       NotificationCenter.default.removeObserver(openSettingsObserver)
     }
+    if let screenLockObserver {
+      NotificationCenter.default.removeObserver(screenLockObserver)
+    }
     for monitor in clickMonitors {
       NSEvent.removeMonitor(monitor)
     }
     clickMonitors.removeAll()
     velnorrWindows.forEach { $0.close() }
     velnorrWindows.removeAll()
+    lockScreenWindows.forEach { $0.close() }
+    lockScreenWindows.removeAll()
     settingsWindow?.close()
     settingsWindow = nil
     onboardingWindow?.close()
@@ -267,6 +289,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       velnorrWindows.append(window)
       window.orderFrontRegardless()
     }
+
+    if runtime.screenLock.isLocked {
+      rebuildLockScreenWindows()
+    }
   }
 
   private func updateVelnorrVisibility() {
@@ -296,6 +322,39 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       velnorrWindows.append(window)
       window.orderFrontRegardless()
     }
+
+    if runtime.screenLock.isLocked {
+      rebuildLockScreenWindows()
+    }
+  }
+
+  private func updateScreenLock(_ isLocked: Bool) {
+    guard renderedScreenLockState != isLocked else {
+      if isLocked, lockScreenWindows.isEmpty {
+        rebuildLockScreenWindows()
+      }
+      return
+    }
+
+    renderedScreenLockState = isLocked
+    rebuildVelnorrs()
+
+    if !isLocked {
+      lockScreenWindows.forEach { $0.close() }
+      lockScreenWindows.removeAll()
+    }
+  }
+
+  private func rebuildLockScreenWindows() {
+    lockScreenWindows.forEach { $0.close() }
+    lockScreenWindows.removeAll()
+    guard runtime.screenLock.isLocked else { return }
+
+    for screen in NSScreen.screens where shouldShowVelnorr(on: screen) {
+      let window = VelnorrLockScreenWindow(screen: screen, runtime: runtime)
+      lockScreenWindows.append(window)
+      window.orderFrontRegardless()
+    }
   }
 
   private func screenHasPhysicalNotch(_ screen: NSScreen) -> Bool {
@@ -311,6 +370,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       screen != NSScreen.main
     {
       return false
+    }
+    if runtime.screenLock.isLocked {
+      return true
     }
     return settings.showInFullscreen || screen.visibleFrame.height < screen.frame.height - 1
   }

@@ -23,6 +23,8 @@ The interface stays quiet when nothing needs attention and expands naturally whe
 
 The expanded music panel closes with an animation after three seconds of pointer-free inactivity.
 
+When the macOS session is locked, Velnorr keeps the Dynamic Island visible with a lock icon on its right side and presents the active music controls in a centered lock-screen widget. Unlocking removes the lock-screen widget and restores the normal interaction surface.
+
 ## Highlights
 
 <table>

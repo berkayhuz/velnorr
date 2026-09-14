@@ -33,6 +33,7 @@ final class VelnorrWindow: NSWindow {
   private var pointerInsideVelnorr = false
   private var isMediaInteractive = false
   private var isCapsLockInteractive = false
+  private var isScreenLocked = false
   private var velnorrLayoutRect = CGRect.zero
   private var pillInteractionPath: CGPath?
   private let displayMode: VelnorrDisplayMode
@@ -104,6 +105,9 @@ final class VelnorrWindow: NSWindow {
           guard let self else { return }
           self.isCapsLockInteractive = visible
           self.refreshMouseState()
+        },
+        onScreenLockChange: { [weak self] locked in
+          self?.updateScreenLock(locked)
         }
       )
     )
@@ -124,12 +128,17 @@ final class VelnorrWindow: NSWindow {
     contentView = hostingView
     installMousePassthroughMonitoring()
     updateMousePassthrough()
+    updateScreenLock(runtime.screenLock.isLocked)
   }
 
   override var canBecomeKey: Bool { false }
   override var canBecomeMain: Bool { false }
 
   override func sendEvent(_ event: NSEvent) {
+    guard !isScreenLocked else {
+      super.sendEvent(event)
+      return
+    }
     let location = event.locationInWindow
     let centerHalfWidth: CGFloat = displayMode == .pill ? 24 : 60
     if event.type == .leftMouseDown,
@@ -146,6 +155,7 @@ final class VelnorrWindow: NSWindow {
   }
 
   override func rightMouseDown(with event: NSEvent) {
+    guard !isScreenLocked else { return }
     let language = AppLanguage.selected
     let menu = NSMenu(title: "Velnorr")
     menu.autoenablesItems = false
@@ -273,6 +283,11 @@ final class VelnorrWindow: NSWindow {
   }
 
   private func updateMousePolling() {
+    guard !isScreenLocked else {
+      stopMousePolling()
+      return
+    }
+
     guard !hasGlobalMouseMonitor else {
       stopMousePolling()
       return
@@ -318,6 +333,13 @@ final class VelnorrWindow: NSWindow {
   }
 
   private func updateMousePassthrough() {
+    guard !isScreenLocked else {
+      ignoresMouseEvents = true
+      updatePointerInsideState(false)
+      stopMousePolling()
+      return
+    }
+
     let screenPoint = NSEvent.mouseLocation
     let insideSurface = containsVelnorr(atScreenPoint: screenPoint)
       || (displayMode == .pill && containsPillInteractionRegion(atScreenPoint: screenPoint))
@@ -339,6 +361,18 @@ final class VelnorrWindow: NSWindow {
     }
 
     updatePointerInsideState(insideSurface)
+  }
+
+  private func updateScreenLock(_ locked: Bool) {
+    isScreenLocked = locked
+    level = locked ? .screenSaver : .statusBar
+    if locked {
+      stopMousePolling()
+      ignoresMouseEvents = true
+      updatePointerInsideState(false)
+    } else {
+      refreshMouseState()
+    }
   }
 
   private func containsCapsLockInteractionRegion(atScreenPoint screenPoint: NSPoint) -> Bool {

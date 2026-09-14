@@ -9,6 +9,7 @@ final class VelnorrRuntime {
   let capsLock: CapsLockStore
   let batteryCharge: BatteryChargeStore
   let bluetoothConnection: BluetoothConnectionStore
+  let screenLock: ScreenLockStore
 
   private var isStarted = false
 
@@ -21,6 +22,7 @@ final class VelnorrRuntime {
     capsLock = CapsLockStore()
     batteryCharge = BatteryChargeStore()
     bluetoothConnection = BluetoothConnectionStore()
+    screenLock = ScreenLockStore()
   }
 
   func start() {
@@ -33,6 +35,7 @@ final class VelnorrRuntime {
     capsLock.start()
     batteryCharge.start()
     bluetoothConnection.start()
+    screenLock.start()
   }
 
   func stop() {
@@ -45,5 +48,6 @@ final class VelnorrRuntime {
     capsLock.stop()
     batteryCharge.stop()
     bluetoothConnection.stop()
+    screenLock.stop()
   }
 }
