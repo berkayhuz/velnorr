@@ -88,26 +88,46 @@ struct VelnorrOnboardingView: View {
   }
 
   private var header: some View {
-    HStack(spacing: 14) {
-      Image(systemName: "waveform")
-        .font(.system(size: 24, weight: .semibold))
-        .foregroundStyle(.tint)
-        .frame(width: 42, height: 42)
-        .background(.tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
+    VStack(alignment: .leading, spacing: 18) {
+      HStack(alignment: .center, spacing: 34) {
+        brandLogo
 
-      VStack(alignment: .leading, spacing: 2) {
-        Text(L("Welcome to Velnorr"))
-          .font(.title2.weight(.bold))
-        Text(L("Your Dynamic Island for macOS"))
-          .font(.callout)
-          .foregroundStyle(.secondary)
+        Text("Velnorr")
+          .font(.system(size: 56, weight: .regular, design: .default))
+          .foregroundStyle(.primary)
+          .lineLimit(1)
       }
 
-      Spacer()
+      Text(L("Your Dynamic Island for macOS"))
+        .font(.system(size: 28, weight: .regular, design: .default))
+        .foregroundStyle(.secondary)
+        .lineLimit(2)
+        .fixedSize(horizontal: false, vertical: true)
     }
-    .padding(.horizontal, 28)
-    .padding(.vertical, 22)
-    .background(.bar)
+    .frame(maxWidth: .infinity, alignment: .leading)
+    .padding(.horizontal, 34)
+    .padding(.vertical, 30)
+    .background(Color(nsColor: .windowBackgroundColor))
+  }
+
+  private var brandLogo: some View {
+    Group {
+      if let url = Bundle.module.url(forResource: "velnorr-logo", withExtension: "svg"),
+        let image = NSImage(contentsOf: url)
+      {
+        Image(nsImage: image)
+          .resizable()
+          .scaledToFit()
+      } else {
+        Image(systemName: "waveform")
+          .font(.system(size: 42, weight: .semibold))
+          .foregroundStyle(.black)
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .background(.white)
+      }
+    }
+    .frame(width: 144, height: 144)
+    .clipShape(RoundedRectangle(cornerRadius: 30, style: .continuous))
   }
 
   private var introduction: some View {
