@@ -75,7 +75,8 @@ struct VelnorrOnboardingView: View {
       .frame(maxWidth: 420)
       .padding(.vertical, 16)
     }
-    .frame(width: 720, height: 760)
+    .frame(width: 720)
+    .fixedSize(horizontal: false, vertical: true)
     .environment(\.layoutDirection, isRightToLeft ? .rightToLeft : .leftToRight)
     .background(onboardingBackground)
     .onAppear(perform: refreshPermissions)

@@ -163,9 +163,23 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     let window = NSWindow(contentViewController: hostingController)
     window.title = AppLanguage.selected.localized("Velnorr Setup")
     window.styleMask = [.titled, .closable]
-    window.setContentSize(NSSize(width: 720, height: 760))
-    window.contentMinSize = NSSize(width: 720, height: 760)
-    window.contentMaxSize = NSSize(width: 720, height: 760)
+
+    // Keep the width fixed while deriving the height from the SwiftUI
+    // content. This avoids both an arbitrary empty area and a scrollbar when
+    // translated permission text takes an extra line.
+    let contentWidth: CGFloat = 720
+    hostingController.view.frame = NSRect(
+      x: 0,
+      y: 0,
+      width: contentWidth,
+      height: 1
+    )
+    hostingController.view.layoutSubtreeIfNeeded()
+    let contentHeight = max(1, ceil(hostingController.view.fittingSize.height))
+    let contentSize = NSSize(width: contentWidth, height: contentHeight)
+    window.setContentSize(contentSize)
+    window.contentMinSize = contentSize
+    window.contentMaxSize = contentSize
     window.isReleasedWhenClosed = false
     window.center()
     onboardingWindow = window
