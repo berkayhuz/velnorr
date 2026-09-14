@@ -17,46 +17,44 @@ struct VelnorrOnboardingView: View {
     VStack(spacing: 0) {
       header
 
-      ScrollView {
-        VStack(alignment: .leading, spacing: 24) {
-          introduction
+      VStack(alignment: .leading, spacing: 24) {
+        introduction
 
-          VStack(alignment: .leading, spacing: 12) {
-            Text(L("One-time setup"))
-              .font(.title3.weight(.semibold))
+        VStack(alignment: .leading, spacing: 12) {
+          Text(L("One-time setup"))
+            .font(.title3.weight(.semibold))
 
-            Text(L("Velnorr needs two macOS permissions to capture system media keys and replace the native volume and brightness HUDs."))
-              .font(.callout)
-              .foregroundStyle(.secondary)
-              .fixedSize(horizontal: false, vertical: true)
-
-            permissionCard(
-              icon: "accessibility",
-              title: L("Accessibility"),
-              detail: L("Required to receive and handle system media key events."),
-              granted: accessibilityGranted,
-              actionTitle: L("Open Accessibility Settings"),
-              action: openAccessibilitySettings
-            )
-
-            permissionCard(
-              icon: "keyboard",
-              title: L("Input Monitoring"),
-              detail: L("Required to listen for volume and brightness key events."),
-              granted: listenEventsGranted,
-              actionTitle: L("Open Input Monitoring Settings"),
-              action: openInputMonitoringSettings
-            )
-          }
-
-          Text(L("Your permissions are checked automatically when Velnorr starts."))
-            .font(.caption)
+          Text(L("Velnorr needs two macOS permissions to capture system media keys and replace the native volume and brightness HUDs."))
+            .font(.callout)
             .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+
+          permissionCard(
+            icon: "accessibility",
+            title: L("Accessibility"),
+            detail: L("Required to receive and handle system media key events."),
+            granted: accessibilityGranted,
+            actionTitle: L("Open Accessibility Settings"),
+            action: openAccessibilitySettings
+          )
+
+          permissionCard(
+            icon: "keyboard",
+            title: L("Input Monitoring"),
+            detail: L("Required to listen for volume and brightness key events."),
+            granted: listenEventsGranted,
+            actionTitle: L("Open Input Monitoring Settings"),
+            action: openInputMonitoringSettings
+          )
         }
-        .frame(maxWidth: 420, alignment: .leading)
-        .padding(.vertical, 28)
-        .frame(maxWidth: .infinity, alignment: .center)
+
+        Text(L("Your permissions are checked automatically when Velnorr starts."))
+          .font(.caption)
+          .foregroundStyle(.secondary)
       }
+      .frame(maxWidth: 420, alignment: .leading)
+      .padding(.bottom, 28)
+      .frame(maxWidth: .infinity, alignment: .center)
 
       Divider()
 
@@ -75,10 +73,9 @@ struct VelnorrOnboardingView: View {
         .buttonStyle(.borderedProminent)
       }
       .frame(maxWidth: 420)
-      .padding(.horizontal, 24)
       .padding(.vertical, 16)
     }
-    .frame(minWidth: 560, maxWidth: 620, minHeight: 500, maxHeight: 540)
+    .frame(width: 720, height: 760)
     .environment(\.layoutDirection, isRightToLeft ? .rightToLeft : .leftToRight)
     .background(onboardingBackground)
     .onAppear(perform: refreshPermissions)
@@ -106,9 +103,10 @@ struct VelnorrOnboardingView: View {
         .lineLimit(2)
         .fixedSize(horizontal: false, vertical: true)
     }
-    .frame(maxWidth: 420, alignment: .center)
     .padding(.horizontal, 32)
-    .padding(.vertical, 36)
+    .padding(.top, 36)
+    .padding(.bottom, 16)
+    .frame(maxWidth: 420, alignment: .center)
     .frame(maxWidth: .infinity, alignment: .center)
     .background(onboardingBackground)
   }
