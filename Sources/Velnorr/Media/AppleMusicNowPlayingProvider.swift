@@ -6,6 +6,8 @@ struct AppleMusicNowPlayingProvider: NowPlayingProviding {
   private let executor: AppleScriptExecutor
   private let bundleIdentifier = "com.apple.Music"
 
+  var applicationBundleIdentifier: String? { bundleIdentifier }
+
   init(executor: AppleScriptExecutor = .shared) {
     self.executor = executor
   }
@@ -13,8 +15,10 @@ struct AppleMusicNowPlayingProvider: NowPlayingProviding {
   @MainActor var isInstalled: Bool { applicationURL != nil }
 
   @MainActor var applicationIcon: NSImage? {
-    Bundle.module.url(forResource: "apple-music-icon", withExtension: "svg")
-      .flatMap { NSImage(contentsOf: $0) }
+    MediaApplicationCache.icon(
+      for: bundleIdentifier,
+      resourceName: "apple-music-icon"
+    )
   }
 
   @MainActor func openApplication() {
@@ -37,8 +41,8 @@ struct AppleMusicNowPlayingProvider: NowPlayingProviding {
     await setPlaying(true)
   }
 
-  func read() async -> NowPlayingSnapshot? {
-    guard await isRunning() else { return nil }
+  func read(isRunning: Bool) async -> NowPlayingSnapshot? {
+    guard isRunning else { return nil }
     let script = #"""
       tell application "Music"
           if player state is playing then
@@ -122,7 +126,7 @@ struct AppleMusicNowPlayingProvider: NowPlayingProviding {
   }
 
   @MainActor private var applicationURL: URL? {
-    NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier)
+    MediaApplicationCache.url(for: bundleIdentifier)
   }
 
   private func isRunning() async -> Bool {

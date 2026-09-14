@@ -19,7 +19,6 @@ final class MusicStatusStore: ObservableObject {
   private var pendingPlaybackState: Bool?
   private var pendingPlaybackDeadline = Date.distantPast
   private var pendingSeekDeadline = Date.distantPast
-  private var pollingTask: Task<Void, Never>?
   private var refreshTask: Task<Void, Never>?
   private var artworkTask: Task<Void, Never>?
   private var artworkTaskIdentifier: UUID?
@@ -28,6 +27,12 @@ final class MusicStatusStore: ObservableObject {
   private var commandTailIdentifier: UUID?
   private var commandTasks: [UUID: Task<Void, Never>] = [:]
   private var previewTask: Task<Void, Never>?
+  private var pollingTimer: Timer?
+  private var applicationObservers: [NSObjectProtocol] = []
+  private var runningProviderSources = Set<MusicSource>()
+
+  private static let playingPollingInterval: TimeInterval = 3
+  private static let pausedPollingInterval: TimeInterval = 8
 
   init(
     providers: [any NowPlayingProviding] = [
@@ -44,14 +49,9 @@ final class MusicStatusStore: ObservableObject {
   func start() {
     guard !hasStarted else { return }
     hasStarted = true
-    pollingTask = Task { @MainActor [weak self] in
-      while !Task.isCancelled {
-        guard let self, self.hasStarted else { return }
-        await self.refreshOnce()
-        guard !Task.isCancelled else { return }
-        try? await Task.sleep(for: .seconds(2))
-      }
-    }
+    installApplicationObservers()
+    refreshRunningProviderSources()
+    refreshIfNeeded()
   }
 
   func stop() {
@@ -60,8 +60,9 @@ final class MusicStatusStore: ObservableObject {
     pendingPlaybackState = nil
     pendingSeekDeadline = .distantPast
 
-    pollingTask?.cancel()
-    pollingTask = nil
+    stopPolling()
+    removeApplicationObservers()
+    runningProviderSources.removeAll()
     refreshTask?.cancel()
     refreshTask = nil
     artworkTask?.cancel()
@@ -105,10 +106,16 @@ final class MusicStatusStore: ObservableObject {
 
   func refresh() {
     guard hasStarted, refreshTask == nil else { return }
+    refreshIfNeeded()
+  }
+
+  private func refreshIfNeeded() {
+    guard hasStarted, refreshTask == nil else { return }
     refreshTask = Task { @MainActor [weak self] in
       guard let self else { return }
       await self.loadAndApplyNowPlaying()
       self.refreshTask = nil
+      self.schedulePollingIfNeeded()
     }
   }
 
@@ -186,6 +193,7 @@ final class MusicStatusStore: ObservableObject {
     guard previewTask == nil else { return }
     if let refreshTask {
       await refreshTask.value
+      schedulePollingIfNeeded()
       return
     }
 
@@ -196,6 +204,7 @@ final class MusicStatusStore: ObservableObject {
     refreshTask = task
     await task.value
     refreshTask = nil
+    schedulePollingIfNeeded()
   }
 
   private func loadAndApplyNowPlaying() async {
@@ -207,7 +216,13 @@ final class MusicStatusStore: ObservableObject {
     var candidates: [SourcedNowPlayingSnapshot] = []
     for provider in providers {
       guard !Task.isCancelled else { return }
-      if let snapshot = await provider.read() {
+      let isRunning = MediaPollingPolicy.shouldRead(
+        applicationBundleIdentifier: provider.applicationBundleIdentifier,
+        source: provider.source,
+        runningSources: runningProviderSources
+      )
+      guard isRunning else { continue }
+      if let snapshot = await provider.read(isRunning: isRunning) {
         candidates.append(SourcedNowPlayingSnapshot(source: provider.source, snapshot: snapshot))
       }
     }
@@ -368,6 +383,115 @@ final class MusicStatusStore: ObservableObject {
       return active
     }
     return providers.first(where: \.isInstalled)
+  }
+
+  private func installApplicationObservers() {
+    let workspaceCenter = NSWorkspace.shared.notificationCenter
+    let launchObserver = workspaceCenter.addObserver(
+      forName: NSWorkspace.didLaunchApplicationNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] notification in
+      guard let bundleIdentifier = (notification.object as? NSRunningApplication)?.bundleIdentifier
+      else { return }
+      Task { @MainActor [weak self] in
+        self?.handleApplicationChange(bundleIdentifier: bundleIdentifier, isRunning: true)
+      }
+    }
+    let terminateObserver = workspaceCenter.addObserver(
+      forName: NSWorkspace.didTerminateApplicationNotification,
+      object: nil,
+      queue: .main
+    ) { [weak self] notification in
+      guard let bundleIdentifier = (notification.object as? NSRunningApplication)?.bundleIdentifier
+      else { return }
+      Task { @MainActor [weak self] in
+        self?.handleApplicationChange(bundleIdentifier: bundleIdentifier, isRunning: false)
+      }
+    }
+    applicationObservers = [launchObserver, terminateObserver]
+  }
+
+  private func removeApplicationObservers() {
+    let workspaceCenter = NSWorkspace.shared.notificationCenter
+    for observer in applicationObservers {
+      workspaceCenter.removeObserver(observer)
+    }
+    applicationObservers.removeAll()
+  }
+
+  private func refreshRunningProviderSources() {
+    runningProviderSources = Set(
+      providers.compactMap { provider in
+        guard let bundleIdentifier = provider.applicationBundleIdentifier else {
+          return provider.source
+        }
+        let isRunning = NSRunningApplication.runningApplications(
+          withBundleIdentifier: bundleIdentifier
+        ).contains { !$0.isTerminated }
+        return isRunning ? provider.source : nil
+      }
+    )
+  }
+
+  private func handleApplicationChange(bundleIdentifier: String, isRunning: Bool) {
+    guard hasStarted,
+      let provider = providers.first(where: {
+        $0.applicationBundleIdentifier == bundleIdentifier
+      })
+    else { return }
+
+    if isRunning {
+      runningProviderSources.insert(provider.source)
+      refreshIfNeeded()
+      return
+    }
+
+    runningProviderSources.remove(provider.source)
+    if runningProviderSources.isEmpty {
+      stopPolling()
+      pendingPlaybackState = nil
+      status = MusicStatus()
+      artworkTask?.cancel()
+      artworkTask = nil
+      artworkTaskIdentifier = nil
+    } else {
+      refreshIfNeeded()
+    }
+  }
+
+  private func schedulePollingIfNeeded() {
+    pollingTimer?.invalidate()
+    pollingTimer = nil
+    guard hasStarted, !runningProviderSources.isEmpty else { return }
+
+    let interval = status.isPlaying
+      ? Self.playingPollingInterval
+      : Self.pausedPollingInterval
+    let timer = Timer(
+      timeInterval: interval,
+      target: self,
+      selector: #selector(pollingTimerDidFire(_:)),
+      userInfo: nil,
+      repeats: false
+    )
+    timer.tolerance = interval * 0.1
+    RunLoop.main.add(timer, forMode: .common)
+    pollingTimer = timer
+  }
+
+  private func stopPolling() {
+    pollingTimer?.invalidate()
+    pollingTimer = nil
+  }
+
+  @objc private func pollingTimerDidFire(_ timer: Timer) {
+    guard hasStarted, !runningProviderSources.isEmpty else {
+      stopPolling()
+      return
+    }
+    pollingTimer = nil
+    refreshIfNeeded()
   }
 
   private func resolvePlaybackState(_ observedState: Bool, now: Date) -> Bool {

@@ -42,6 +42,30 @@ final class MusicStatusStoreTests: XCTestCase {
     XCTAssertGreaterThanOrEqual(store.status.elapsed, 60)
   }
 
+  func testPollingPolicySkipsStoppedProviders() {
+    XCTAssertFalse(
+      MediaPollingPolicy.shouldRead(
+        applicationBundleIdentifier: "com.velnorr.test.not-running",
+        source: .music,
+        runningSources: []
+      )
+    )
+    XCTAssertTrue(
+      MediaPollingPolicy.shouldRead(
+        applicationBundleIdentifier: "com.velnorr.test.running",
+        source: .music,
+        runningSources: [.music]
+      )
+    )
+    XCTAssertTrue(
+      MediaPollingPolicy.shouldRead(
+        applicationBundleIdentifier: nil,
+        source: .unknown,
+        runningSources: []
+      )
+    )
+  }
+
   private func snapshot(
     title: String,
     isPlaying: Bool,
@@ -86,8 +110,8 @@ private final class TestNowPlayingProvider: NowPlayingProviding, @unchecked Send
   @MainActor var applicationIcon: NSImage? { nil }
   @MainActor func openApplication() {}
 
-  func read() async -> NowPlayingSnapshot? {
-    snapshot
+  func read(isRunning: Bool) async -> NowPlayingSnapshot? {
+    lock.withLock { storedSnapshot }
   }
 
   func launchAndPlay() async {}

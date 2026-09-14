@@ -6,6 +6,8 @@ struct SpotifyNowPlayingProvider: NowPlayingProviding {
   private let executor: AppleScriptExecutor
   private let bundleIdentifier = "com.spotify.client"
 
+  var applicationBundleIdentifier: String? { bundleIdentifier }
+
   init(executor: AppleScriptExecutor = .shared) {
     self.executor = executor
   }
@@ -13,8 +15,10 @@ struct SpotifyNowPlayingProvider: NowPlayingProviding {
   @MainActor var isInstalled: Bool { applicationURL != nil }
 
   @MainActor var applicationIcon: NSImage? {
-    Bundle.module.url(forResource: "spotify-icon", withExtension: "svg")
-      .flatMap { NSImage(contentsOf: $0) }
+    MediaApplicationCache.icon(
+      for: bundleIdentifier,
+      resourceName: "spotify-icon"
+    )
   }
 
   @MainActor func openApplication() {
@@ -37,8 +41,8 @@ struct SpotifyNowPlayingProvider: NowPlayingProviding {
     await setPlaying(true)
   }
 
-  func read() async -> NowPlayingSnapshot? {
-    guard await isRunning() else { return nil }
+  func read(isRunning: Bool) async -> NowPlayingSnapshot? {
+    guard isRunning else { return nil }
     let script = #"""
       tell application "Spotify"
           if player state is playing then
@@ -115,7 +119,7 @@ struct SpotifyNowPlayingProvider: NowPlayingProviding {
   }
 
   @MainActor private var applicationURL: URL? {
-    NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleIdentifier)
+    MediaApplicationCache.url(for: bundleIdentifier)
   }
 
   private func isRunning() async -> Bool {
