@@ -166,7 +166,10 @@ private enum SettingsSection: String, CaseIterable, Identifiable {
     case .general: ["hover", "fullscreen", "behavior"]
     case .displays: ["external", "screen", "pill", "notch"]
     case .language: ["locale", "translation", "device language", "system default"]
-    case .appearance: ["theme", "color", "radius", "animation", "padding"]
+    case .appearance: [
+      "theme", "color", "radius", "animation", "padding", "lock screen", "dynamic island",
+      "right icon",
+    ]
     case .media: ["spotify", "apple music", "artwork", "waveform", "marquee"]
     case .volume: ["sound", "speaker", "volume", "hud"]
     case .brightness: ["screen", "sun", "brightness", "display"]
@@ -225,6 +228,7 @@ private enum SettingsResetter {
     AppSettings.showInFullscreen,
     AppSettings.externalDisplayMode,
     AppSettings.horizontalOffset, AppSettings.verticalOffset, AppSettings.language,
+    AppSettings.lockScreenRightIcon, AppSettings.lockScreenRightIconColor,
     "appearanceAnimations", "appearanceArtwork", "appearanceOpacity", "appearanceTheme",
     "appearanceArtworkSize", "appearanceArtworkRadius", "mediaWaveform", "mediaMarquee",
     "mediaWaveformSpeed", "mediaMarqueeSpeed", "mediaProgressBar", "mediaShowTitle", "mediaShowArtist",
@@ -371,6 +375,10 @@ private struct AdditionalSettingsPage: View {
   @AppStorage("appearanceArtworkRadius") private var artworkRadius = 4.0
   @AppStorage("appearanceOpacity") private var opacity = 1.0
   @AppStorage("appearanceTheme") private var appearanceTheme = "black"
+  @AppStorage(AppSettings.lockScreenRightIcon) private var lockScreenRightIcon =
+    AppSettings.defaultLockScreenRightIcon
+  @AppStorage(AppSettings.lockScreenRightIconColor) private var lockScreenRightIconColor =
+    AppSettings.defaultLockScreenRightIconColor
   @AppStorage("mediaWaveform") private var waveform = true
   @AppStorage("mediaMarquee") private var marquee = true
   @AppStorage("mediaProgressBar") private var progressBar = true
@@ -462,6 +470,20 @@ private struct AdditionalSettingsPage: View {
             Text(L("Black")).tag("black")
             Text(L("Midnight")).tag("midnight")
             Text(L("Graphite")).tag("graphite")
+          }
+        }
+        Section(L("Lock screen")) {
+          Picker(L("Right icon"), selection: $lockScreenRightIcon) {
+            ForEach(LockScreenRightIconOption.allCases) { option in
+              Image(systemName: option.rawValue)
+                .accessibilityLabel(option.rawValue)
+                .tag(option.rawValue)
+            }
+          }
+          Picker(L("Icon color"), selection: $lockScreenRightIconColor) {
+            ForEach(LockScreenRightIconColorOption.allCases) { option in
+              Text(L(option.localizationKey)).tag(option.rawValue)
+            }
           }
         }
       case .media:

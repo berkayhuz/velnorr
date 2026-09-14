@@ -18,12 +18,26 @@ enum VelnorrLockScreenLayout {
     topRadius: CGFloat,
     centerGap: CGFloat
   ) -> CGFloat {
+    sideIconX(
+      width: width,
+      topRadius: topRadius,
+      centerGap: centerGap,
+      isLeading: true
+    )
+  }
+
+  static func sideIconX(
+    width: CGFloat,
+    topRadius: CGFloat,
+    centerGap: CGFloat,
+    isLeading: Bool
+  ) -> CGFloat {
     if centerGap == 0 {
       return width / 2
     }
     // A physical notch removes the rounded outer corner from the visible
     // interval at the icon's vertical center.
-    return (topRadius + width) / 2
+    return isLeading ? (topRadius + width) / 2 : (width - topRadius) / 2
   }
 
   static func widgetFrame(for screenFrame: CGRect) -> CGRect {

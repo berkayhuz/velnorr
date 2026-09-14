@@ -13,6 +13,11 @@ enum AppSettings {
   static let capsLockHUD = "capsLockHUD"
   static let capsLockDisplayDuration = "capsLockDisplayDuration"
   static let capsLockHUDSize = "capsLockHUDSize"
+  static let lockScreenRightIcon = "lockScreenRightIcon"
+  static let lockScreenRightIconColor = "lockScreenRightIconColor"
+
+  static let defaultLockScreenRightIcon = "face.smiling"
+  static let defaultLockScreenRightIconColor = "white"
 
   @MainActor static let defaults: [String: Any] = [
     launchAtLogin: true,
@@ -25,6 +30,8 @@ enum AppSettings {
     capsLockHUD: true,
     capsLockDisplayDuration: 1.6,
     capsLockHUDSize: 38.0,
+    lockScreenRightIcon: defaultLockScreenRightIcon,
+    lockScreenRightIconColor: defaultLockScreenRightIconColor,
   ]
 }
 

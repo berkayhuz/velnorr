@@ -221,4 +221,48 @@ final class LayoutAndSettingsTests: XCTestCase {
       accuracy: 0.001
     )
   }
+
+  func testLockScreenRightIconIsCenteredInTrailingSide() {
+    XCTAssertEqual(
+      VelnorrLockScreenLayout.sideIconX(
+        width: 63,
+        topRadius: 12,
+        centerGap: 148,
+        isLeading: false
+      ),
+      25.5,
+      accuracy: 0.001
+    )
+    XCTAssertEqual(
+      VelnorrLockScreenLayout.sideIconX(
+        width: 68,
+        topRadius: 12,
+        centerGap: 0,
+        isLeading: false
+      ),
+      34,
+      accuracy: 0.001
+    )
+  }
+
+  func testLockScreenRightIconSettingsHaveSafeDefaultsAndFallbacks() {
+    XCTAssertEqual(AppSettings.defaultLockScreenRightIcon, "face.smiling")
+    XCTAssertEqual(AppSettings.defaultLockScreenRightIconColor, "white")
+    XCTAssertEqual(
+      LockScreenRightIconResolver.symbol(for: "face.smiling"),
+      "face.smiling"
+    )
+    XCTAssertEqual(
+      LockScreenRightIconResolver.symbol(for: "not-a-symbol"),
+      AppSettings.defaultLockScreenRightIcon
+    )
+    XCTAssertEqual(
+      LockScreenRightIconResolver.symbol(for: ""),
+      AppSettings.defaultLockScreenRightIcon
+    )
+    XCTAssertEqual(
+      LockScreenRightIconResolver.color(for: "not-a-color"),
+      LockScreenRightIconColorOption.white.color
+    )
+  }
 }

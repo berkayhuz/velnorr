@@ -23,6 +23,10 @@ struct VelnorrShellView: View {
   @AppStorage("appearanceArtworkRadius") private var artworkRadius = 4.0
   @AppStorage("appearanceOpacity") private var velnorrOpacity = 1.0
   @AppStorage("appearanceTheme") private var appearanceTheme = "black"
+  @AppStorage(AppSettings.lockScreenRightIcon) private var lockScreenRightIcon =
+    AppSettings.defaultLockScreenRightIcon
+  @AppStorage(AppSettings.lockScreenRightIconColor) private var lockScreenRightIconColor =
+    AppSettings.defaultLockScreenRightIconColor
   @AppStorage("mediaWaveform") private var waveformEnabled = true
   @AppStorage("mediaMarquee") private var marqueeEnabled = true
   @AppStorage("mediaProgressBar") private var progressBarEnabled = true
@@ -402,7 +406,9 @@ struct VelnorrShellView: View {
               leftSideWidth: layout.leftSideWidth,
               rightSideWidth: layout.rightSideWidth,
               height: layout.height,
-              topRadius: layout.topRadius
+              topRadius: layout.topRadius,
+              rightIconName: lockScreenRightIcon,
+              rightIconColor: LockScreenRightIconResolver.color(for: lockScreenRightIconColor)
             )
             .transition(VelnorrTransition.content)
           }
