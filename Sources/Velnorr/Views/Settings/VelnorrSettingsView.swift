@@ -294,7 +294,6 @@ private enum SettingsResetter {
       let profilesJSON = String(data: profilesData, encoding: .utf8) {
       UserDefaults.standard.set(profilesJSON, forKey: "settingsProfiles")
     }
-    UserDefaults.standard.synchronize()
     NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: UserDefaults.standard)
   }
 
@@ -302,7 +301,6 @@ private enum SettingsResetter {
     for key in managedKeys {
       UserDefaults.standard.removeObject(forKey: key)
     }
-    UserDefaults.standard.synchronize()
     NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: UserDefaults.standard)
   }
 }
@@ -739,7 +737,6 @@ private struct AdditionalSettingsPage: View {
     for (key, value) in values where SettingsResetter.managedKeys.contains(key) {
       UserDefaults.standard.set(value, forKey: key)
     }
-    UserDefaults.standard.synchronize()
     NotificationCenter.default.post(name: UserDefaults.didChangeNotification, object: UserDefaults.standard)
   }
 
