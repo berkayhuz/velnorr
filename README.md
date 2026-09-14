@@ -37,7 +37,7 @@ The interface stays quiet when nothing needs attention and expands naturally whe
   <tr>
     <td>
       <strong>System HUDs</strong><br>
-      Animated volume and brightness feedback with configurable bars, icons, colors and durations.
+      Animated volume, brightness and Caps Lock feedback with configurable visibility and durations.
     </td>
     <td>
       <strong>Battery events</strong><br>
@@ -115,7 +115,7 @@ swift run Velnorr --preview-mouse
 swift run Velnorr --preview-speaker
 ```
 
-Preview mode is also available from Settings → Preview for volume, brightness and music states.
+Preview mode is also available from Settings → Preview for volume, brightness, Caps Lock and music states.
 
 ## Settings
 
@@ -126,7 +126,7 @@ Right-click Velnorr and choose **Settings** to customize:
 - Interface language and system-default language detection
 - Animation, artwork size/radius, opacity and theme
 - Now Playing content, waveform and marquee behavior
-- Volume and brightness HUD visibility, bars, icons and timing
+- Volume, brightness and Caps Lock HUD visibility, styling and timing
 - Battery event types, thresholds, icon size and notification duration
 - Connected-device notification categories and timing
 - Reduced motion, diagnostics, JSON import/export and saved profiles

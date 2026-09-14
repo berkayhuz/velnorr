@@ -13,7 +13,8 @@ struct SpotifyNowPlayingProvider: NowPlayingProviding {
   @MainActor var isInstalled: Bool { applicationURL != nil }
 
   @MainActor var applicationIcon: NSImage? {
-    applicationURL.map { NSWorkspace.shared.icon(forFile: $0.path) }
+    Bundle.module.url(forResource: "spotify-icon", withExtension: "svg")
+      .flatMap { NSImage(contentsOf: $0) }
   }
 
   @MainActor func openApplication() {

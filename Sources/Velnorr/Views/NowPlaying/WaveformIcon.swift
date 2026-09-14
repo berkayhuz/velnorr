@@ -4,6 +4,7 @@ import SwiftUI
 struct WaveformIcon: View {
   let color: Color
   var animationSpeed: Double = 1
+  var isAnimating: Bool = true
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @AppStorage("reduceMotionOverride") private var reduceMotionOverride = false
   @AppStorage("appearanceAnimations") private var animationsEnabled = true
@@ -13,7 +14,9 @@ struct WaveformIcon: View {
     if reduceMotion || reduceMotionOverride || !animationsEnabled {
       bars(at: 0)
     } else {
-      TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { timeline in
+      TimelineView(
+        .animation(minimumInterval: 1.0 / 30.0, paused: !isAnimating)
+      ) { timeline in
         bars(at: timeline.date.timeIntervalSinceReferenceDate)
       }
     }

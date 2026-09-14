@@ -10,6 +10,7 @@ struct VelnorrShellView: View {
   @AppStorage(AppSettings.expandOnHover) private var expandOnHover = true
   @AppStorage("volumeHUD") private var volumeHUDEnabled = true
   @AppStorage("brightnessHUD") private var brightnessHUDEnabled = true
+  @AppStorage(AppSettings.capsLockHUD) private var capsLockHUDEnabled = true
   @AppStorage("batteryHUD") private var batteryHUDEnabled = true
   @AppStorage("deviceHUD") private var deviceHUDEnabled = true
   @AppStorage("notificationHUD") private var notificationHUDEnabled = true
@@ -30,6 +31,7 @@ struct VelnorrShellView: View {
   @AppStorage("mediaMarqueeSpeed") private var marqueeSpeed = 25.0
   @AppStorage("mediaShowTitle") private var showMediaTitle = true
   @AppStorage("mediaShowArtist") private var showMediaArtist = true
+  @AppStorage("mediaSourceIcon") private var showMediaSourceIcon = false
   @AppStorage("volumeBarWidth") private var volumeBarWidth = 52.0
   @AppStorage("brightnessBarWidth") private var brightnessBarWidth = 52.0
   @AppStorage("volumeIconSize") private var volumeIconSize = 13.0
@@ -42,6 +44,7 @@ struct VelnorrShellView: View {
   @StateObject private var music = MusicStatusStore()
   @StateObject private var audioVolume = AudioVolumeStore()
   @StateObject private var screenBrightness = ScreenBrightnessStore()
+  @StateObject private var capsLock = CapsLockStore()
   @StateObject private var batteryCharge = BatteryChargeStore()
   @StateObject private var bluetoothConnection = BluetoothConnectionStore()
   @State private var interaction = VelnorrInteractionState()
@@ -191,6 +194,7 @@ struct VelnorrShellView: View {
                 },
                 isFloatingPill: metrics.displayMode == .pill,
                 showArtwork: artworkEnabled,
+                showApplicationIcon: showMediaSourceIcon,
                 showProgress: progressBarEnabled,
                 showTrackNavigation: trackNavigationEnabled,
                 showShuffle: shuffleButtonEnabled,
@@ -416,6 +420,15 @@ struct VelnorrShellView: View {
       .clipShape(
         velnorrShape
       )
+      .overlay(alignment: .top) {
+        CapsLockHUDView(
+          isEnabled: capsLock.isEnabled,
+          isVisible: capsLockHUDEnabled && capsLock.isVisible,
+          surfaceColor: velnorrColor.opacity(velnorrOpacity),
+          reduceMotion: reduceMotion || !animationsEnabled
+        )
+        .offset(y: layout.height)
+      }
       .offset(x: layout.horizontalOffset)
       .animation(
         animationsEnabled ? VelnorrAnimation.surface(reduceMotion: reduceMotion) : nil,
@@ -449,6 +462,9 @@ struct VelnorrShellView: View {
       }
       .onReceive(NotificationCenter.default.publisher(for: .velnorrPreviewBrightness)) { _ in
         screenBrightness.showPreview()
+      }
+      .onReceive(NotificationCenter.default.publisher(for: .velnorrPreviewCapsLock)) { _ in
+        capsLock.showPreview()
       }
       .onReceive(NotificationCenter.default.publisher(for: .velnorrPreviewDevice)) { notification in
         let kind: ConnectedAppleDeviceKind
@@ -544,6 +560,7 @@ struct VelnorrShellView: View {
         music.start()
         audioVolume.start()
         screenBrightness.start()
+        capsLock.start()
         batteryCharge.start()
         bluetoothConnection.start()
         onMediaExpandedChange?(interaction.isMediaExpanded)
@@ -564,6 +581,7 @@ struct VelnorrShellView: View {
         music.stop()
         audioVolume.stop()
         screenBrightness.stop()
+        capsLock.stop()
         batteryCharge.stop()
         bluetoothConnection.stop()
       }

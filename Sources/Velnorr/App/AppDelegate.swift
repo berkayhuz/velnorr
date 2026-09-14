@@ -23,7 +23,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     terminateOtherInstances()
     rebuildVelnorrs()
 
-    if !UserDefaults.standard.bool(forKey: AppSettings.onboardingCompleted) {
+    if UserDefaults.standard.string(forKey: AppSettings.onboardingCompletedVersion)
+      != currentAppVersion {
       DispatchQueue.main.async { [weak self] in
         self?.showOnboardingWindow()
       }
@@ -155,7 +156,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     let hostingController = NSHostingController(
       rootView: VelnorrOnboardingView { [weak self] in
-        UserDefaults.standard.set(true, forKey: AppSettings.onboardingCompleted)
+        UserDefaults.standard.set(self?.currentAppVersion, forKey: AppSettings.onboardingCompletedVersion)
         self?.onboardingWindow?.close()
         self?.onboardingWindow = nil
       }
@@ -167,7 +168,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // Keep the width fixed while deriving the height from the SwiftUI
     // content. This avoids both an arbitrary empty area and a scrollbar when
     // translated permission text takes an extra line.
-    let contentWidth: CGFloat = 720
+    let contentWidth: CGFloat = 520
     hostingController.view.frame = NSRect(
       x: 0,
       y: 0,
@@ -186,6 +187,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     NSApp.activate(ignoringOtherApps: true)
     window.makeKeyAndOrderFront(nil)
+  }
+
+  private var currentAppVersion: String {
+    Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
   }
 
   private func terminateOtherInstances() {

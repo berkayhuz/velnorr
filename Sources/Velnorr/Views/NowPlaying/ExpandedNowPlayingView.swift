@@ -15,6 +15,7 @@ struct ExpandedNowPlayingView: View {
   let onSeek: (TimeInterval) -> Void
   let isFloatingPill: Bool
   let showArtwork: Bool
+  let showApplicationIcon: Bool
   let showProgress: Bool
   let showTrackNavigation: Bool
   let showShuffle: Bool
@@ -43,7 +44,7 @@ struct ExpandedNowPlayingView: View {
         if showProgress {
           ExpandedPlaybackProgress(status: status, onSeek: onSeek)
             .frame(width: contentWidth, height: 18)
-            .offset(x: horizontalInset, y: 82)
+            .offset(x: horizontalInset, y: 92)
         }
 
         controls
@@ -58,7 +59,7 @@ struct ExpandedNowPlayingView: View {
   }
 
   private var header: some View {
-    HStack(spacing: 15) {
+    HStack(spacing: 10) {
       Button(action: onOpenSource) {
         expandedArtwork
           .id(status.trackKey)
@@ -71,7 +72,7 @@ struct ExpandedNowPlayingView: View {
       VStack(alignment: .leading, spacing: 2) {
         Button(action: onOpenTrack) {
           Text(status.hasTrack && !status.title.isEmpty ? status.title : "Not Playing")
-            .font(.system(size: 16, weight: .semibold))
+            .font(.system(size: 15, weight: .semibold))
             .foregroundStyle(status.hasTrack ? .white : .white.opacity(0.42))
             .lineLimit(1)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -83,7 +84,7 @@ struct ExpandedNowPlayingView: View {
         if status.hasTrack {
           Button(action: onOpenArtist) {
             Text(status.artist.isEmpty ? "Bilinmeyen Sanatçı" : status.artist)
-              .font(.system(size: 13, weight: .medium))
+              .font(.system(size: 11, weight: .medium))
               .foregroundStyle(.white.opacity(0.46))
               .lineLimit(1)
               .frame(maxWidth: .infinity, alignment: .leading)
@@ -99,22 +100,18 @@ struct ExpandedNowPlayingView: View {
 
       Spacer(minLength: 10)
 
-      if status.isPlaying {
-        WaveformIcon(color: Color(nsColor: status.accentColor).opacity(0.72))
+      if status.hasTrack {
+        WaveformIcon(
+          color: Color(nsColor: status.accentColor).opacity(0.72),
+          isAnimating: status.isPlaying
+        )
           .frame(width: 24, height: 21)
           .offset(x: -4, y: 6)
       } else {
-        if status.hasTrack {
-          Image(systemName: "waveform")
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundStyle(Color(nsColor: status.accentColor).opacity(0.5))
-            .frame(width: 24, height: 21)
-        } else {
-          NotPlayingIndicator()
-            .frame(width: 24, height: 21)
-            .scaleEffect(0.85)
-            .offset(x: -2, y: 12)
-        }
+        NotPlayingIndicator()
+          .frame(width: 24, height: 21)
+          .scaleEffect(0.85)
+          .offset(x: -2, y: 12)
       }
     }
     .animation(
@@ -140,6 +137,17 @@ struct ExpandedNowPlayingView: View {
     }
     .frame(width: 54, height: 54)
     .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    .overlay(alignment: .bottomTrailing) {
+      if showApplicationIcon, status.hasTrack, let applicationIcon = status.applicationIcon {
+        Image(nsImage: applicationIcon)
+          .resizable()
+          .interpolation(.high)
+          .scaledToFit()
+          .frame(width: 18, height: 18)
+          .offset(x: 4, y: 4)
+          .accessibilityHidden(true)
+      }
+    }
   }
 
   private var controls: some View {
@@ -259,10 +267,10 @@ private struct ExpandedPlaybackProgress: View {
 
   var body: some View {
     TimelineView(.animation(minimumInterval: 1.0 / 30.0, paused: !status.isPlaying)) { timeline in
-      let elapsed = previewElapsed ?? currentElapsed(at: timeline.date)
+        let elapsed = previewElapsed ?? currentElapsed(at: timeline.date)
       HStack(spacing: 10) {
         Text(status.hasTrack ? format(elapsed) : "--:--")
-          .frame(width: 34, alignment: .leading)
+          .frame(width: 34, alignment: .center)
 
         GeometryReader { geometry in
           let progress =
@@ -301,7 +309,7 @@ private struct ExpandedPlaybackProgress: View {
           status.hasTrack && status.duration > 0
             ? "-\(format(max(0, status.duration - elapsed)))" : "--:--"
         )
-        .frame(width: 42, alignment: .trailing)
+        .frame(width: 34, alignment: .center)
       }
       .font(.system(size: 11, weight: .semibold, design: .rounded))
       .foregroundStyle(.white.opacity(0.43))

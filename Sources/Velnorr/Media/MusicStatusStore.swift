@@ -18,6 +18,7 @@ final class MusicStatusStore: ObservableObject {
   private var hasStarted = false
   private var pendingPlaybackState: Bool?
   private var pendingPlaybackDeadline = Date.distantPast
+  private var pendingSeekDeadline = Date.distantPast
   private var pollingTask: Task<Void, Never>?
   private var refreshTask: Task<Void, Never>?
   private var artworkTask: Task<Void, Never>?
@@ -57,6 +58,7 @@ final class MusicStatusStore: ObservableObject {
     guard hasStarted else { return }
     hasStarted = false
     pendingPlaybackState = nil
+    pendingSeekDeadline = .distantPast
 
     pollingTask?.cancel()
     pollingTask = nil
@@ -81,6 +83,7 @@ final class MusicStatusStore: ObservableObject {
       isPlaying: true,
       artwork: nil,
       artworkTrackKey: "",
+      applicationIcon: applicationIcon(for: .music),
       accentColor: .systemGreen,
       trackKey: "velnorr-preview",
       title: "Preview Song",
@@ -166,9 +169,11 @@ final class MusicStatusStore: ObservableObject {
   }
 
   func seek(to seconds: TimeInterval) {
-    status.elapsed = max(0, min(status.duration, seconds))
+    let target = max(0, min(status.duration, seconds))
+    status.elapsed = target
     status.playbackUpdatedAt = Date()
-    enqueue(.seek(seconds))
+    pendingSeekDeadline = Date().addingTimeInterval(2.5)
+    enqueue(.seek(target))
   }
 
   func openAudioOutputSettings() {
@@ -225,7 +230,16 @@ final class MusicStatusStore: ObservableObject {
     let resolvedIsPlaying = resolvePlaybackState(snapshot.isPlaying, now: now)
     let sameTrack = status.trackKey == snapshot.trackKey && status.source == selected.source
     let expectedElapsed = currentElapsed(at: now)
-    let elapsedNeedsCorrection = abs(expectedElapsed - snapshot.elapsed) > 2.5
+    let seekIsPending = now < pendingSeekDeadline
+    if !seekIsPending {
+      pendingSeekDeadline = .distantPast
+    }
+    // While playing, the UI's timeline is smoother and more accurate than
+    // occasionally stale AppleScript player-position values. Only rebase a
+    // paused track (or a newly selected track); seek has its own short grace
+    // period so the provider can catch up before a refresh is applied.
+    let elapsedNeedsCorrection =
+      !sameTrack || (!resolvedIsPlaying && !seekIsPending && abs(expectedElapsed - snapshot.elapsed) > 0.75)
     let metadataChanged =
       !sameTrack || status.title != snapshot.title || status.artist != snapshot.artist
       || status.duration != snapshot.duration || status.isPlaying != resolvedIsPlaying
@@ -249,6 +263,7 @@ final class MusicStatusStore: ObservableObject {
         isPlaying: resolvedIsPlaying,
         artwork: sameTrack ? status.artwork : nil,
         artworkTrackKey: sameTrack ? status.artworkTrackKey : "",
+        applicationIcon: applicationIcon(for: selected.source),
         accentColor: sameTrack ? status.accentColor : defaultAccentColor(for: selected.source),
         trackKey: snapshot.trackKey,
         title: snapshot.title,
@@ -366,5 +381,9 @@ final class MusicStatusStore: ObservableObject {
 
   private func defaultAccentColor(for source: MusicSource) -> NSColor {
     source == .music ? .systemPink : .systemGreen
+  }
+
+  private func applicationIcon(for source: MusicSource) -> NSImage? {
+    providers.first(where: { $0.source == source })?.applicationIcon
   }
 }

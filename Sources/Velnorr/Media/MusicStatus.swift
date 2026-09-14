@@ -6,6 +6,7 @@ struct MusicStatus {
   var isPlaying = false
   var artwork: NSImage?
   var artworkTrackKey = ""
+  var applicationIcon: NSImage?
   var accentColor = NSColor.systemGreen
   var trackKey = ""
   var title = ""

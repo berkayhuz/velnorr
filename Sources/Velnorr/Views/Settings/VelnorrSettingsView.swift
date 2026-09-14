@@ -32,7 +32,9 @@ struct VelnorrSettingsView: View {
       VStack(spacing: 0) {
         HStack(spacing: 8) {
           Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-          TextField(selectedLanguage.localized("Search"), text: $searchText).textFieldStyle(.plain)
+          TextField(selectedLanguage.localized("Search"), text: $searchText)
+            .textFieldStyle(.plain)
+            .foregroundStyle(.primary)
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
@@ -74,7 +76,7 @@ struct VelnorrSettingsView: View {
           .padding(.bottom, 12)
         }
       }
-      .background(Color(red: 39.0 / 255.0, green: 44.0 / 255.0, blue: 48.0 / 255.0))
+      .background(Color(nsColor: .windowBackgroundColor))
       .frame(width: 250)
 
       Group {
@@ -93,9 +95,10 @@ struct VelnorrSettingsView: View {
         }
       }
       .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-      .background(Color(red: 39.0 / 255.0, green: 44.0 / 255.0, blue: 48.0 / 255.0))
+      .background(Color(nsColor: .windowBackgroundColor))
     }
     .frame(minWidth: 760, minHeight: 520)
+    .background(Color(nsColor: .windowBackgroundColor))
     .id(language)
     .environment(\.locale, Locale(identifier: (AppLanguage(rawValue: language) ?? .system).localeIdentifier))
     .environment(\.layoutDirection, selectedLanguage.isRightToLeft ? .rightToLeft : .leftToRight)
@@ -225,10 +228,11 @@ private enum SettingsResetter {
     "appearanceAnimations", "appearanceArtwork", "appearanceOpacity", "appearanceTheme",
     "appearanceArtworkSize", "appearanceArtworkRadius", "mediaWaveform", "mediaMarquee",
     "mediaWaveformSpeed", "mediaMarqueeSpeed", "mediaProgressBar", "mediaShowTitle", "mediaShowArtist",
-    "mediaTrackNavigation", "mediaShuffleButton", "mediaAudioOutputButton", "mediaPlaybackButton",
+    "mediaSourceIcon", "mediaTrackNavigation", "mediaShuffleButton", "mediaAudioOutputButton", "mediaPlaybackButton",
     "volumeHUD", "brightnessHUD", "volumeBarWidth", "brightnessBarWidth", "volumeIconSize",
     "brightnessIconSize", "volumeBarColor", "brightnessBarColor", "volumeBarHeight", "brightnessBarHeight",
     "batteryIconWidth", "showOnExternalDisplays", "batteryHUD", "deviceHUD", "notificationHUD",
+    AppSettings.capsLockHUD, AppSettings.capsLockDisplayDuration,
     "reduceMotionOverride", "debugLogging", "previewMode", "batteryLowThreshold", "batteryGreenThreshold",
     "batteryDisplayDuration", "volumeDisplayDuration", "brightnessDisplayDuration", "batteryShowCharging",
     "batteryShowUnplugged", "batteryShowLow", "batteryShowFull", "batteryShowThreshold", "deviceAirPods",
@@ -380,6 +384,7 @@ private struct AdditionalSettingsPage: View {
   @AppStorage("mediaMarqueeSpeed") private var marqueeSpeed = 25.0
   @AppStorage("mediaShowTitle") private var showMediaTitle = true
   @AppStorage("mediaShowArtist") private var showMediaArtist = true
+  @AppStorage("mediaSourceIcon") private var showMediaSourceIcon = false
   @AppStorage("volumeBarWidth") private var volumeBarWidth = 52.0
   @AppStorage("brightnessBarWidth") private var brightnessBarWidth = 52.0
   @AppStorage("volumeIconSize") private var volumeIconSize = 13.0
@@ -400,6 +405,8 @@ private struct AdditionalSettingsPage: View {
   @AppStorage("deviceSpeaker") private var speaker = true
   @AppStorage("deviceDisplayDuration") private var deviceDisplayDuration = 3.5
   @AppStorage("notificationHUD") private var notificationHUD = true
+  @AppStorage(AppSettings.capsLockHUD) private var capsLockHUD = true
+  @AppStorage(AppSettings.capsLockDisplayDuration) private var capsLockDisplayDuration = 1.6
   @AppStorage("reduceMotionOverride") private var reduceMotionOverride = false
   @AppStorage("debugLogging") private var debugLogging = false
   @AppStorage("previewMode") private var previewMode = false
@@ -465,6 +472,7 @@ private struct AdditionalSettingsPage: View {
           Toggle(AppLanguage.selected.localized("Show progress bar"), isOn: $progressBar)
           Toggle(AppLanguage.selected.localized("Show song title"), isOn: $showMediaTitle)
           Toggle(AppLanguage.selected.localized("Show artist name"), isOn: $showMediaArtist)
+          Toggle(L("Show source application icon"), isOn: $showMediaSourceIcon)
           Toggle(L("Show previous and next buttons"), isOn: $trackNavigation)
           Toggle(L("Show shuffle button"), isOn: $shuffleButton)
           Toggle(L("Show audio output button"), isOn: $audioOutputButton)
@@ -571,6 +579,15 @@ private struct AdditionalSettingsPage: View {
         Section(L("Notifications")) {
           Toggle(L("Show notifications in Velnorr"), isOn: $notificationHUD)
         }
+        Section(L("Caps Lock HUD")) {
+          Toggle(L("Show Caps Lock HUD"), isOn: $capsLockHUD)
+          durationSlider(title: "Notification duration", value: $capsLockDisplayDuration)
+            .disabled(!capsLockHUD)
+          Text(L("Velnorr consumes the Caps Lock event to suppress the macOS overlay. If Logi Options+ still shows its own overlay, disable Caps Lock notifications in Logi Options+ settings."))
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+        }
       case .accessibility:
         Section(AppLanguage.selected.localized("Motion")) {
           Toggle(AppLanguage.selected.localized("Reduce motion"), isOn: $reduceMotionOverride)
@@ -630,6 +647,9 @@ private struct AdditionalSettingsPage: View {
           }
           Button(L("Preview brightness HUD")) {
             NotificationCenter.default.post(name: .velnorrPreviewBrightness, object: nil)
+          }
+          Button(L("Preview Caps Lock HUD")) {
+            NotificationCenter.default.post(name: .velnorrPreviewCapsLock, object: nil)
           }
           Button(L("Preview AirPods")) { postDevicePreview("airPods") }
           Button(L("Preview Apple Watch")) { postDevicePreview("appleWatch") }
@@ -831,7 +851,7 @@ private struct SettingsPageContainer<Content: View>: View {
       .padding(.bottom, 24)
     }
     .scrollContentBackground(.hidden)
-    .background(Color(red: 39.0 / 255.0, green: 44.0 / 255.0, blue: 48.0 / 255.0))
+    .background(Color(nsColor: .windowBackgroundColor))
   }
 }
 

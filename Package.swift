@@ -16,6 +16,8 @@ let package = Package(
         .copy("Resources/Battery.svg"),
         .copy("Resources/velnorr-logo.svg"),
         .copy("Resources/logo-huzstudio.svg"),
+        .copy("Resources/apple-music-icon.svg"),
+        .copy("Resources/spotify-icon.svg"),
         .copy("Resources/tr.lproj"),
         .copy("Resources/es.lproj"),
         .copy("Resources/de.lproj"),

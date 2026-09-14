@@ -13,7 +13,8 @@ struct AppleMusicNowPlayingProvider: NowPlayingProviding {
   @MainActor var isInstalled: Bool { applicationURL != nil }
 
   @MainActor var applicationIcon: NSImage? {
-    applicationURL.map { NSWorkspace.shared.icon(forFile: $0.path) }
+    Bundle.module.url(forResource: "apple-music-icon", withExtension: "svg")
+      .flatMap { NSImage(contentsOf: $0) }
   }
 
   @MainActor func openApplication() {

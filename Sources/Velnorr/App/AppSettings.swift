@@ -9,6 +9,9 @@ enum AppSettings {
   static let verticalOffset = "hudVerticalOffset"
   static let language = "appLanguage"
   static let onboardingCompleted = "onboardingCompleted"
+  static let onboardingCompletedVersion = "onboardingCompletedVersion"
+  static let capsLockHUD = "capsLockHUD"
+  static let capsLockDisplayDuration = "capsLockDisplayDuration"
 
   @MainActor static let defaults: [String: Any] = [
     launchAtLogin: true,
@@ -18,6 +21,8 @@ enum AppSettings {
     horizontalOffset: 0.0,
     verticalOffset: 0.0,
     language: AppLanguage.system.rawValue,
+    capsLockHUD: true,
+    capsLockDisplayDuration: 1.6,
   ]
 }
 
