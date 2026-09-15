@@ -32,6 +32,25 @@ final class VelnorrPresentationResolverTests: XCTestCase {
     )
   }
 
+  func testBrightnessBecomesTheNextPresentationAfterVolumeDisappears() {
+    let volumePresentation = resolve(
+      volumeEnabled: true,
+      volumeVisible: true,
+      brightnessEnabled: true,
+      brightnessVisible: true
+    )
+    let brightnessPresentation = resolve(
+      volumeEnabled: true,
+      volumeVisible: false,
+      brightnessEnabled: true,
+      brightnessVisible: true
+    )
+
+    XCTAssertEqual(volumePresentation, .volume)
+    XCTAssertEqual(brightnessPresentation, .brightness)
+    XCTAssertNotEqual(volumePresentation, brightnessPresentation)
+  }
+
   private func resolve(
     deviceEnabled: Bool = false,
     deviceVisible: Bool = false,

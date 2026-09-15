@@ -481,6 +481,13 @@ struct VelnorrShellView: View {
           }
 
         }
+
+        .animation(
+          animationsEnabled
+            ? (reduceMotion ? .easeOut(duration: 0.12) : VelnorrAnimation.content)
+            : nil,
+          value: presentationState
+        )
       }
 
       .clipShape(
