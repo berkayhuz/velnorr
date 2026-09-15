@@ -15,6 +15,11 @@ final class AppLanguageTests: XCTestCase {
     XCTAssertEqual(AppLanguage.german.localized("Quit Velnorr"), "Velnorr beenden")
   }
 
+  func testTurkishBatteryTranslationsUseChargingLanguage() {
+    XCTAssertEqual(AppLanguage.turkish.localized("Unplugged"), "Şarj bağlantısı kesildi")
+    XCTAssertEqual(AppLanguage.turkish.localized("Charged"), "Şarj tamamlandı")
+  }
+
   func testArabicAccessibilityTranslationLoads() {
     XCTAssertEqual(AppLanguage.arabic.localized("Reduce motion"), "تقليل الحركة")
   }

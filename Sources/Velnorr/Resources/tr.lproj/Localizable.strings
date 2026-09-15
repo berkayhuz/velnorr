@@ -149,7 +149,7 @@
 "System Default follows the device language and falls back to English when unavailable." = "Sistem Varsayılanı cihazın dilini takip eder ve kullanılamadığında İngilizceye geri döner.";
 "Test Velnorr states without changing system hardware." = "Sistem donanımını değiştirmeden Velnorr durumlarını test edin.";
 "Threshold changes" = "Eşik değişiklikleri";
-"Unplugged" = "Şarjdan çıkarıldı";
+"Unplugged" = "Şarj bağlantısı kesildi";
 "Velnorr is a lightweight Dynamic Velnorr experience for macOS, designed and developed by Berkay Huz at Huzstudio." = "Velnorr, Berkay Huz tarafından Huzstudio'da tasarlanıp geliştirilen, macOS için hafif bir Dynamic Velnorr deneyimidir.";
 "Vertical position" = "Dikey konum";
 "Waveform speed" = "Dalga biçimi hızı";
@@ -171,7 +171,7 @@
 "Sound volume" = "Ses seviyesi";
 "Battery disconnected" = "Pil bağlantısı kesildi";
 "Low" = "Düşük";
-"Charged" = "Ücretlendirildi";
+"Charged" = "Şarj tamamlandı";
 "Welcome to Velnorr" = "Velnorr'a hoş geldiniz";
 "Your Dynamic Island for macOS" = "macOS için Dynamic Island'ınız";
 "A calmer way to see what matters" = "Önemli olanları daha sakin bir şekilde görün";

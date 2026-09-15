@@ -6,6 +6,7 @@ import IOKit.ps
 final class BatteryChargeStore: ObservableObject {
   static let fallbackPollingInterval: TimeInterval = 60
   static let fallbackPollingTolerance: TimeInterval = 6
+  static let defaultBatteryThresholdInterval = 10
 
   enum HUDMode: Equatable { case charging, unplugged, low, full, threshold }
   @Published private(set) var isVisible = false
@@ -135,20 +136,13 @@ final class BatteryChargeStore: ObservableObject {
     guard let snapshot = Self.readSnapshot() else { return }
     let previous = lastSnapshot
     lastSnapshot = snapshot
-    let nextMode: HUDMode
-    if snapshot.level == 100, previous?.level != 100 {
-      nextMode = .full
-    } else if snapshot.level < lowBatteryThreshold,
-      (previous?.level ?? lowBatteryThreshold) >= lowBatteryThreshold
-    {
-      nextMode = .low
-    } else if let previous,
-      (previous.level < greenBatteryThreshold) != (snapshot.level < greenBatteryThreshold)
-    {
-      nextMode = .threshold
-    } else {
-      nextMode = snapshot.isPluggedIn ? .charging : .unplugged
-    }
+    let eventMode = Self.notificationMode(
+      current: snapshot,
+      previous: previous,
+      lowBatteryThreshold: lowBatteryThreshold,
+      greenBatteryThreshold: greenBatteryThreshold
+    )
+    let nextMode = eventMode ?? (snapshot.isPluggedIn ? .charging : .unplugged)
 
     if level != snapshot.level {
       level = snapshot.level
@@ -159,7 +153,7 @@ final class BatteryChargeStore: ObservableObject {
     if mode != nextMode {
       mode = nextMode
     }
-    guard showOnChange, previous != nil, previous != snapshot, isModeEnabled(nextMode) else {
+    guard showOnChange, let eventMode, isModeEnabled(eventMode) else {
       return
     }
 
@@ -200,6 +194,43 @@ final class BatteryChargeStore: ObservableObject {
     return UserDefaults.standard.object(forKey: key) as? Bool ?? true
   }
 
+  static func notificationMode(
+    current: Snapshot?,
+    previous: Snapshot?,
+    lowBatteryThreshold: Int,
+    greenBatteryThreshold: Int,
+    thresholdInterval: Int = defaultBatteryThresholdInterval
+  ) -> HUDMode? {
+    guard let current, let previous else { return nil }
+
+    if current.level == 100, previous.level != 100 {
+      return .full
+    }
+    if current.level < lowBatteryThreshold, previous.level >= lowBatteryThreshold {
+      return .low
+    }
+    if current.isPluggedIn != previous.isPluggedIn {
+      return current.isPluggedIn ? .charging : .unplugged
+    }
+
+    let crossesConfiguredGreenThreshold =
+      (previous.level < greenBatteryThreshold) != (current.level < greenBatteryThreshold)
+    let greenThresholdCoveredByCadence =
+      thresholdInterval > 0 && greenBatteryThreshold % thresholdInterval == 0
+    let crossedGreenThreshold =
+      crossesConfiguredGreenThreshold && !greenThresholdCoveredByCadence
+    let crossedBatteryThreshold =
+      thresholdBucket(for: previous.level, interval: thresholdInterval)
+      != thresholdBucket(for: current.level, interval: thresholdInterval)
+    return crossedGreenThreshold || crossedBatteryThreshold ? .threshold : nil
+  }
+
+  private static func thresholdBucket(for level: Int, interval: Int) -> Int? {
+    guard interval > 0 else { return nil }
+    let boundedLevel = min(100, max(0, level))
+    return (boundedLevel + interval - 1) / interval
+  }
+
   private func startThresholdPreview() {
     previewTask = Task { @MainActor [weak self] in
       let values = [79, 80, 99, 100]
@@ -214,7 +245,7 @@ final class BatteryChargeStore: ObservableObject {
     }
   }
 
-  private struct Snapshot: Equatable {
+  struct Snapshot: Equatable {
     let level: Int
     let isCharging: Bool
     let isPluggedIn: Bool

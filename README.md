@@ -132,7 +132,7 @@ Right-click Velnorr and choose **Settings** to customize:
 - Lock-screen Dynamic Island right-side icon and color
 - Now Playing content, waveform and marquee behavior
 - Volume, brightness and Caps Lock HUD visibility, styling, timing and size
-- Battery event types, thresholds, icon size and notification duration
+- Battery event types, thresholds, 10% threshold cadence, icon size and notification duration
 - Connected-device notification categories and timing
 - Reduced motion, diagnostics, JSON import/export and saved profiles
 
