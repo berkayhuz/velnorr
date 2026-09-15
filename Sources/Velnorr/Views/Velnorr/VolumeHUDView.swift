@@ -11,6 +11,8 @@ struct VolumeHUDView: View {
   let iconSize: CGFloat
   let barColor: Color
   let barHeight: CGFloat
+  let onValueChanged: (Double) -> Void
+  let onInteractionChanged: (Bool) -> Void
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
@@ -42,8 +44,11 @@ struct VolumeHUDView: View {
           volume: volume,
           reduceMotion: reduceMotion,
           width: barWidth,
+          availableWidth: max(barWidth, rightSideWidth - 16),
           barColor: barColor,
-          barHeight: barHeight
+          barHeight: barHeight,
+          onValueChanged: onValueChanged,
+          onInteractionChanged: onInteractionChanged
         )
       }
     }
@@ -51,6 +56,17 @@ struct VolumeHUDView: View {
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(AppLanguage.selected.localized("Sound volume"))
     .accessibilityValue("\(Int((volume * 100).rounded())) percent")
+    .accessibilityAdjustableAction { direction in
+      let step = 0.0625
+      switch direction {
+      case .increment:
+        onValueChanged(min(1, volume + step))
+      case .decrement:
+        onValueChanged(max(0, volume - step))
+      @unknown default:
+        break
+      }
+    }
   }
 
   private var volumeSymbol: String {
@@ -86,27 +102,23 @@ private struct VolumeLevelBar: View {
   let volume: Double
   let reduceMotion: Bool
   let width: CGFloat
+  let availableWidth: CGFloat
   let barColor: Color
   let barHeight: CGFloat
+  let onValueChanged: (Double) -> Void
+  let onInteractionChanged: (Bool) -> Void
 
   var body: some View {
-    GeometryReader { geometry in
-      let barWidth = max(0, geometry.size.width)
-      ZStack(alignment: .leading) {
-        Capsule(style: .continuous)
-          .fill(Color.white.opacity(0.18))
-
-        Capsule(style: .continuous)
-          .fill(barColor.opacity(0.9))
-          .frame(width: barWidth * volume)
-      }
-      .frame(height: barHeight)
-      .frame(maxHeight: .infinity)
-    }
-    .frame(width: width, height: 18)
-    .animation(
-      reduceMotion ? .easeOut(duration: 0.1) : VelnorrAnimation.control,
-      value: volume
+    InteractiveHUDLevelBar(
+      value: volume,
+      reduceMotion: reduceMotion,
+      width: width,
+      availableWidth: availableWidth,
+      barColor: barColor,
+      barHeight: barHeight,
+      accessibilityLabel: AppLanguage.selected.localized("Sound volume"),
+      onValueChanged: onValueChanged,
+      onInteractionChanged: onInteractionChanged
     )
   }
 }

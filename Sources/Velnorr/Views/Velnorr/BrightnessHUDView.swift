@@ -11,6 +11,8 @@ struct BrightnessHUDView: View {
   let iconSize: CGFloat
   let barColor: Color
   let barHeight: CGFloat
+  let onValueChanged: (Double) -> Void
+  let onInteractionChanged: (Bool) -> Void
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
@@ -32,23 +34,34 @@ struct BrightnessHUDView: View {
       }
       Color.clear.frame(width: centerGap).allowsHitTesting(false)
       sideRegion(isLeft: false, width: rightSideWidth) {
-        GeometryReader { geometry in
-          ZStack(alignment: .leading) {
-            Capsule().fill(.white.opacity(0.18))
-            Capsule().fill(barColor.opacity(0.9)).frame(width: geometry.size.width * brightness)
-          }
-          .frame(height: barHeight)
-          .frame(maxHeight: .infinity)
-        }
-        .frame(width: barWidth, height: 18)
-        .animation(
-          reduceMotion ? .easeOut(duration: 0.1) : VelnorrAnimation.control, value: brightness)
+        InteractiveHUDLevelBar(
+          value: brightness,
+          reduceMotion: reduceMotion,
+          width: barWidth,
+          availableWidth: max(barWidth, rightSideWidth - 16),
+          barColor: barColor,
+          barHeight: barHeight,
+          accessibilityLabel: AppLanguage.selected.localized("Brightness"),
+          onValueChanged: onValueChanged,
+          onInteractionChanged: onInteractionChanged
+        )
       }
     }
     .frame(height: height)
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(AppLanguage.selected.localized("Brightness"))
     .accessibilityValue("\(Int((brightness * 100).rounded())) percent")
+    .accessibilityAdjustableAction { direction in
+      let step = 0.0625
+      switch direction {
+      case .increment:
+        onValueChanged(min(1, brightness + step))
+      case .decrement:
+        onValueChanged(max(0, brightness - step))
+      @unknown default:
+        break
+      }
+    }
   }
 
   private var brightnessSymbol: String {

@@ -418,10 +418,11 @@ struct VelnorrShellView: View {
               barWidth: CGFloat(volumeBarWidth),
               iconSize: CGFloat(volumeIconSize),
               barColor: hudColor(volumeBarColor),
-              barHeight: CGFloat(volumeBarHeight)
+              barHeight: CGFloat(volumeBarHeight),
+              onValueChanged: { audioVolume.setVolumeFromHUD($0) },
+              onInteractionChanged: { audioVolume.setInteractionActive($0) }
             )
             .transition(VelnorrTransition.content)
-            .allowsHitTesting(false)
           }
 
           if brightnessOverlayVisible {
@@ -435,10 +436,11 @@ struct VelnorrShellView: View {
               barWidth: CGFloat(brightnessBarWidth),
               iconSize: CGFloat(brightnessIconSize),
               barColor: hudColor(brightnessBarColor),
-              barHeight: CGFloat(brightnessBarHeight)
+              barHeight: CGFloat(brightnessBarHeight),
+              onValueChanged: { screenBrightness.setBrightnessFromHUD($0) },
+              onInteractionChanged: { screenBrightness.setInteractionActive($0) }
             )
             .transition(VelnorrTransition.content)
-            .allowsHitTesting(false)
           }
 
           if batteryOverlayVisible {

@@ -14,6 +14,7 @@ final class AudioVolumeStore: ObservableObject {
   private var hideTask: Task<Void, Never>?
   private var eventTapRetryTask: Task<Void, Never>?
   private var hasReceivedInitialValue = false
+  private var isInteractionActive = false
 
   func start() {
     monitor.start { [weak self] value in
@@ -33,18 +34,31 @@ final class AudioVolumeStore: ObservableObject {
     hideTask = nil
     isVisible = false
     hasReceivedInitialValue = false
+    isInteractionActive = false
   }
 
   func showPreview() {
     volume = 0.65
     isVisible = true
-    hideTask?.cancel()
-    let duration = hudDisplayDuration
-    hideTask = Task { @MainActor [weak self] in
-      try? await Task.sleep(for: .milliseconds(Int(duration * 1000)))
-      guard !Task.isCancelled else { return }
-      self?.isVisible = false
-      self?.hideTask = nil
+    scheduleHide()
+  }
+
+  func setVolumeFromHUD(_ value: Double) {
+    let clampedValue = min(1, max(0, value))
+    let appliedValue = monitor.setVolume(Float32(clampedValue))
+    volumeDidChange(appliedValue)
+  }
+
+  func setInteractionActive(_ active: Bool) {
+    guard active != isInteractionActive else { return }
+    isInteractionActive = active
+
+    if active {
+      isVisible = true
+      hideTask?.cancel()
+      hideTask = nil
+    } else {
+      scheduleHide()
     }
   }
 
@@ -60,7 +74,14 @@ final class AudioVolumeStore: ObservableObject {
     }
 
     isVisible = true
+    scheduleHide()
+  }
+
+  private func scheduleHide() {
     hideTask?.cancel()
+    hideTask = nil
+    guard !isInteractionActive else { return }
+
     let displayDuration = hudDisplayDuration
     hideTask = Task { @MainActor [weak self] in
       try? await Task.sleep(for: .milliseconds(Int(displayDuration * 1000)))

@@ -14,6 +14,7 @@ final class ScreenBrightnessStore: ObservableObject {
   private var hideTask: Task<Void, Never>?
   private var eventTapRetryTask: Task<Void, Never>?
   private var brightnessObserver: NSObjectProtocol?
+  private var isInteractionActive = false
 
   func start() {
     installBrightnessObserverIfNeeded()
@@ -46,6 +47,7 @@ final class ScreenBrightnessStore: ObservableObject {
     hideTask?.cancel()
     hideTask = nil
     isVisible = false
+    isInteractionActive = false
   }
 
   func showPreview() {
@@ -53,8 +55,8 @@ final class ScreenBrightnessStore: ObservableObject {
     show(brightness: brightness)
   }
 
-  private func apply(_ event: SystemBrightnessEvent) {
-    brightness = min(1, max(0, brightness + (event == .increase ? 0.0625 : -0.0625)))
+  func setBrightnessFromHUD(_ value: Double) {
+    brightness = min(1, max(0, value))
     displayController.write(brightness)
     NotificationCenter.default.post(
       name: .velnorrBrightnessChanged,
@@ -64,6 +66,25 @@ final class ScreenBrightnessStore: ObservableObject {
     show(brightness: brightness)
   }
 
+  func setInteractionActive(_ active: Bool) {
+    guard active != isInteractionActive else { return }
+    isInteractionActive = active
+
+    if active {
+      isVisible = true
+      hideTask?.cancel()
+      hideTask = nil
+    } else {
+      scheduleHide()
+    }
+  }
+
+  private func apply(_ event: SystemBrightnessEvent) {
+    setBrightnessFromHUD(
+      brightness + (event == .increase ? 0.0625 : -0.0625)
+    )
+  }
+
   private func receive(brightness: Double) {
     self.brightness = min(1, max(0, brightness))
     show(brightness: self.brightness)
@@ -71,7 +92,14 @@ final class ScreenBrightnessStore: ObservableObject {
 
   private func show(brightness: Double) {
     isVisible = true
+    scheduleHide()
+  }
+
+  private func scheduleHide() {
     hideTask?.cancel()
+    hideTask = nil
+    guard !isInteractionActive else { return }
+
     let displayDuration = hudDisplayDuration
     hideTask = Task { @MainActor [weak self] in
       try? await Task.sleep(for: .milliseconds(Int(displayDuration * 1000)))

@@ -41,7 +41,7 @@ When the macOS session is locked, Velnorr keeps the Dynamic Island visible with 
   <tr>
     <td>
       <strong>System HUDs</strong><br>
-      Animated volume, brightness and Caps Lock feedback with configurable visibility and durations.
+      Animated volume, brightness and Caps Lock feedback with configurable visibility and durations. Hover and drag the volume or brightness bar to adjust it directly.
     </td>
     <td>
       <strong>Battery events</strong><br>
@@ -132,6 +132,7 @@ Right-click Velnorr and choose **Settings** to customize:
 - Lock-screen Dynamic Island right-side icon and color
 - Now Playing content, waveform and marquee behavior
 - Volume, brightness and Caps Lock HUD visibility, styling, timing and size
+- Direct volume and brightness adjustment by hovering and dragging their HUD bars
 - Battery event types, thresholds, 10% threshold cadence, icon size and notification duration
 - Connected-device notification categories and timing
 - Reduced motion, diagnostics, JSON import/export and saved profiles
