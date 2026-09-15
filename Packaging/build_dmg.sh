@@ -6,16 +6,25 @@ DIST_DIR="$PROJECT_DIR/dist"
 APP_PATH="$DIST_DIR/Velnorr.app"
 DMG_PATH="$DIST_DIR/Velnorr-1.0.0.dmg"
 STAGING_DIR="$DIST_DIR/.dmg-staging"
+ICON_BUILD_DIR="$DIST_DIR/.icon-build"
 
-rm -rf "$APP_PATH" "$DMG_PATH" "$STAGING_DIR"
-mkdir -p "$APP_PATH/Contents/MacOS" "$APP_PATH/Contents/Resources" "$STAGING_DIR"
+rm -rf "$APP_PATH" "$DMG_PATH" "$STAGING_DIR" "$ICON_BUILD_DIR"
+mkdir -p "$APP_PATH/Contents/MacOS" "$APP_PATH/Contents/Resources" "$STAGING_DIR" "$ICON_BUILD_DIR"
 
 cd "$PROJECT_DIR"
 swift build -c release
 BIN_DIR="$(swift build -c release --show-bin-path)"
+actool \
+  --compile "$ICON_BUILD_DIR" \
+  --platform macosx \
+  --minimum-deployment-target 13.0 \
+  --app-icon Velnorr \
+  --output-partial-info-plist "$ICON_BUILD_DIR/Info.plist" \
+  "$PROJECT_DIR/Packaging/Velnorr.icon" >/dev/null
 cp "$BIN_DIR/Velnorr" "$APP_PATH/Contents/MacOS/Velnorr"
 cp "$PROJECT_DIR/Packaging/Info.plist" "$APP_PATH/Contents/Info.plist"
-cp "$PROJECT_DIR/Packaging/Velnorr.icns" "$APP_PATH/Contents/Resources/Velnorr.icns"
+cp "$ICON_BUILD_DIR/Velnorr.icns" "$APP_PATH/Contents/Resources/Velnorr.icns"
+cp "$ICON_BUILD_DIR/Assets.car" "$APP_PATH/Contents/Resources/Assets.car"
 RESOURCE_BUNDLE="$BIN_DIR/Velnorr_Velnorr.bundle"
 if [[ -d "$RESOURCE_BUNDLE" ]]; then
   cp -R "$RESOURCE_BUNDLE" "$APP_PATH/Contents/Resources/"

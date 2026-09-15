@@ -12,6 +12,8 @@
 	<string>com.berkayhuz.velnorr</string>
 	<key>CFBundleIconFile</key>
 	<string>Velnorr.icns</string>
+	<key>CFBundleIconName</key>
+	<string>Velnorr</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>

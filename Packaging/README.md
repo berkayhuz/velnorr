@@ -13,3 +13,6 @@ This local package is signed with the first available Apple Development or
 Developer ID Application identity. For distribution to other Macs, replace
 the local identity with a Developer ID Application certificate and notarize
 the app/DMG with Apple before publishing it.
+
+The package build compiles `Packaging/Velnorr.icon` into the app’s `Assets.car`
+and `Velnorr.icns`, including the light and dark appearance variants.
