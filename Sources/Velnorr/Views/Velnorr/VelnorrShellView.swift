@@ -7,6 +7,7 @@ struct VelnorrShellView: View {
   let runtime: VelnorrRuntime
   let onLayoutChange: ((CGRect, CGFloat, CGFloat) -> Void)?
   let onMediaExpandedChange: ((Bool) -> Void)?
+  let onLevelBarInteractionChange: ((Bool) -> Void)?
   let onCapsLockVisibilityChange: ((Bool) -> Void)?
   let onScreenLockChange: ((Bool) -> Void)?
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -66,6 +67,7 @@ struct VelnorrShellView: View {
     runtime: VelnorrRuntime,
     onLayoutChange: ((CGRect, CGFloat, CGFloat) -> Void)?,
     onMediaExpandedChange: ((Bool) -> Void)?,
+    onLevelBarInteractionChange: ((Bool) -> Void)?,
     onCapsLockVisibilityChange: ((Bool) -> Void)?,
     onScreenLockChange: ((Bool) -> Void)?
   ) {
@@ -73,6 +75,7 @@ struct VelnorrShellView: View {
     self.runtime = runtime
     self.onLayoutChange = onLayoutChange
     self.onMediaExpandedChange = onMediaExpandedChange
+    self.onLevelBarInteractionChange = onLevelBarInteractionChange
     self.onCapsLockVisibilityChange = onCapsLockVisibilityChange
     self.onScreenLockChange = onScreenLockChange
     _music = ObservedObject(wrappedValue: runtime.music)
@@ -420,7 +423,10 @@ struct VelnorrShellView: View {
               barColor: hudColor(volumeBarColor),
               barHeight: CGFloat(volumeBarHeight),
               onValueChanged: { audioVolume.setVolumeFromHUD($0) },
-              onInteractionChanged: { audioVolume.setInteractionActive($0) }
+              onInteractionChanged: {
+                audioVolume.setInteractionActive($0)
+                onLevelBarInteractionChange?($0)
+              }
             )
             .transition(VelnorrTransition.content)
           }
@@ -438,7 +444,10 @@ struct VelnorrShellView: View {
               barColor: hudColor(brightnessBarColor),
               barHeight: CGFloat(brightnessBarHeight),
               onValueChanged: { screenBrightness.setBrightnessFromHUD($0) },
-              onInteractionChanged: { screenBrightness.setInteractionActive($0) }
+              onInteractionChanged: {
+                screenBrightness.setInteractionActive($0)
+                onLevelBarInteractionChange?($0)
+              }
             )
             .transition(VelnorrTransition.content)
           }

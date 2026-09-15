@@ -12,9 +12,10 @@ enum VelnorrMousePolicy {
 
   static func ignoresMouseEvents(
     isMediaExpanded: Bool,
+    isLevelBarInteracting: Bool = false,
     pointerInsideShape: Bool
   ) -> Bool {
-    if isMediaExpanded {
+    if isMediaExpanded || isLevelBarInteracting {
       return false
     }
     return !pointerInsideShape

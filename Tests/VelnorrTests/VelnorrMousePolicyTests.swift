@@ -33,6 +33,16 @@ final class VelnorrMousePolicyTests: XCTestCase {
     )
   }
 
+  func testActiveLevelBarNeverPassesMouseThroughDuringDrag() {
+    XCTAssertFalse(
+      VelnorrMousePolicy.ignoresMouseEvents(
+        isMediaExpanded: false,
+        isLevelBarInteracting: true,
+        pointerInsideShape: false
+      )
+    )
+  }
+
   func testCompactVelnorrPassesMouseThroughOutsideShape() {
     XCTAssertTrue(
       VelnorrMousePolicy.ignoresMouseEvents(

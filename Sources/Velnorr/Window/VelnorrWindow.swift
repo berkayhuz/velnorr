@@ -32,6 +32,7 @@ final class VelnorrWindow: NSWindow {
   private var mousePollingRate: MousePollingRate?
   private var pointerInsideVelnorr = false
   private var isMediaInteractive = false
+  private var isLevelBarInteractive = false
   private var isCapsLockInteractive = false
   private var isScreenLocked = false
   private var velnorrLayoutRect = CGRect.zero
@@ -99,6 +100,11 @@ final class VelnorrWindow: NSWindow {
         onMediaExpandedChange: { [weak self] expanded in
           guard let self else { return }
           self.isMediaInteractive = expanded
+          self.refreshMouseState()
+        },
+        onLevelBarInteractionChange: { [weak self] interacting in
+          guard let self else { return }
+          self.isLevelBarInteractive = interacting
           self.refreshMouseState()
         },
         onCapsLockVisibilityChange: { [weak self] visible in
@@ -294,9 +300,10 @@ final class VelnorrWindow: NSWindow {
     }
 
     let desiredRate: MousePollingRate
-    if isMediaInteractive {
-      // Expanded media must continue to observe pointer exit when the global
-      // monitor is unavailable (for example without Accessibility access).
+    if isMediaInteractive || isLevelBarInteractive {
+      // Keep tracking pointer exit during media or level-bar interaction when
+      // the global monitor is unavailable (for example without Accessibility
+      // access).
       desiredRate = .media
     } else {
       let proximityFrame = frame.insetBy(dx: -80, dy: -80)
@@ -349,6 +356,7 @@ final class VelnorrWindow: NSWindow {
 
     let shouldIgnoreMouseEvents = VelnorrMousePolicy.ignoresMouseEvents(
       isMediaExpanded: isMediaInteractive,
+      isLevelBarInteracting: isLevelBarInteractive,
       pointerInsideShape: inside
     )
     if ignoresMouseEvents != shouldIgnoreMouseEvents {

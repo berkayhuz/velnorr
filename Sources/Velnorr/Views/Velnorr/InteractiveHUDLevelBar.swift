@@ -30,7 +30,7 @@ struct InteractiveHUDLevelBar: View {
   @State private var isDragging = false
 
   private var displayedWidth: CGFloat {
-    isHovered
+    isHovered || isDragging
       ? HUDLevelInteraction.expandedWidth(
         baseWidth: width,
         availableWidth: availableWidth
@@ -81,9 +81,6 @@ struct InteractiveHUDLevelBar: View {
     )
     .onHover { hovering in
       isHovered = hovering
-      if !hovering {
-        isDragging = false
-      }
       onInteractionChanged(hovering || isDragging)
     }
     .animation(
