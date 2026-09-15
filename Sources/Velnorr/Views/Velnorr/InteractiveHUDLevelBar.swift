@@ -54,35 +54,38 @@ struct InteractiveHUDLevelBar: View {
       }
       .frame(height: isHovered ? min(10, barHeight + 2) : barHeight)
       .frame(maxHeight: .infinity)
-      .contentShape(Rectangle())
-      .gesture(
-        DragGesture(minimumDistance: 0, coordinateSpace: .local)
-          .onChanged { gesture in
-            if !isDragging {
-              isDragging = true
-              onInteractionChanged(true)
-            }
-            onValueChanged(
-              HUDLevelInteraction.value(
-                for: gesture.location.x,
-                width: geometry.size.width
-              )
-            )
-          }
-          .onEnded { _ in
-            isDragging = false
-            onInteractionChanged(isHovered)
-          }
-      )
-      .onHover { hovering in
-        isHovered = hovering
-        if !hovering {
-          isDragging = false
-        }
-        onInteractionChanged(hovering || isDragging)
-      }
     }
     .frame(width: displayedWidth, height: 18)
+    // Keep the whole 18-point control frame interactive, not only the thin
+    // rendered capsule. High priority also prevents the surrounding HUD
+    // interaction layer from winning the mouse-drag gesture.
+    .contentShape(Rectangle())
+    .highPriorityGesture(
+      DragGesture(minimumDistance: 0, coordinateSpace: .local)
+        .onChanged { gesture in
+          if !isDragging {
+            isDragging = true
+            onInteractionChanged(true)
+          }
+          onValueChanged(
+            HUDLevelInteraction.value(
+              for: gesture.location.x,
+              width: displayedWidth
+            )
+          )
+        }
+        .onEnded { _ in
+          isDragging = false
+          onInteractionChanged(isHovered)
+        }
+    )
+    .onHover { hovering in
+      isHovered = hovering
+      if !hovering {
+        isDragging = false
+      }
+      onInteractionChanged(hovering || isDragging)
+    }
     .animation(
       isDragging || reduceMotion ? nil : VelnorrAnimation.control,
       value: displayedWidth
