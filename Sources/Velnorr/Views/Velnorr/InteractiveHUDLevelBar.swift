@@ -2,8 +2,8 @@ import CoreGraphics
 import SwiftUI
 
 enum HUDLevelInteraction {
-  static let hoverExpansion: CGFloat = 8
-  static let hoverScale: CGFloat = 1.02
+  static let hoverExpansion: CGFloat = 24
+  static let hoverScale: CGFloat = 1.05
 
   static func value(for locationX: CGFloat, width: CGFloat) -> Double {
     guard width > 0 else { return 0 }

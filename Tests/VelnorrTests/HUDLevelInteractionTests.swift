@@ -14,7 +14,7 @@ final class HUDLevelInteractionTests: XCTestCase {
   func testHoverExpansionStaysWithinAvailableSideWidth() {
     XCTAssertEqual(
       HUDLevelInteraction.expandedWidth(baseWidth: 52, availableWidth: 100),
-      60
+      76
     )
     XCTAssertEqual(
       HUDLevelInteraction.expandedWidth(baseWidth: 52, availableWidth: 60),
@@ -24,6 +24,6 @@ final class HUDLevelInteractionTests: XCTestCase {
       HUDLevelInteraction.expandedWidth(baseWidth: 52, availableWidth: 40),
       52
     )
-    XCTAssertEqual(HUDLevelInteraction.hoverScale, 1.02)
+    XCTAssertEqual(HUDLevelInteraction.hoverScale, 1.05)
   }
 }
