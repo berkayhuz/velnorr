@@ -16,8 +16,8 @@ final class AppLanguageTests: XCTestCase {
   }
 
   func testTurkishBatteryTranslationsUseChargingLanguage() {
-    XCTAssertEqual(AppLanguage.turkish.localized("Unplugged"), "Şarj bağlantısı kesildi")
-    XCTAssertEqual(AppLanguage.turkish.localized("Charged"), "Şarj tamamlandı")
+    XCTAssertEqual(AppLanguage.turkish.localized("Unplugged"), "Şarj kesildi")
+    XCTAssertEqual(AppLanguage.turkish.localized("Charged"), "Tam şarj")
   }
 
   func testArabicAccessibilityTranslationLoads() {

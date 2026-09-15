@@ -24,7 +24,9 @@ struct BatteryHUDView: View {
           Text(label)
             .font(.system(size: 12, weight: .semibold))
             .lineLimit(1)
-            .fixedSize(horizontal: true, vertical: false)
+            .minimumScaleFactor(0.72)
+            .allowsTightening(true)
+            .truncationMode(.tail)
         }
         .foregroundStyle(.white.opacity(0.9))
       }
@@ -65,13 +67,19 @@ struct BatteryHUDView: View {
   ) -> some View {
     let isFloatingPill = centerGap == 0
     let edgeInset = min(18, max(8, width / 2 - 10))
+    let contentWidth = max(1, width - (isFloatingPill ? edgeInset * 2 : 16))
+    let contentAlignment: Alignment = isFloatingPill
+      ? (isLeft ? .leading : .trailing)
+      : .center
     return ZStack {
-      content().position(
-        x: isFloatingPill
-          ? (isLeft ? topRadius + edgeInset : width - topRadius - edgeInset)
-          : (isLeft ? width / 2 + 9 : width / 2 - 9),
-        y: height / 2
-      )
+      content()
+        .frame(width: contentWidth, alignment: contentAlignment)
+        .position(
+          x: isFloatingPill
+            ? (isLeft ? edgeInset + contentWidth / 2 : width - edgeInset - contentWidth / 2)
+            : (isLeft ? width / 2 + 9 : width / 2 - 9),
+          y: height / 2
+        )
     }
     .frame(width: width, height: height)
   }
