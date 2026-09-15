@@ -51,6 +51,29 @@ final class VelnorrPresentationResolverTests: XCTestCase {
     XCTAssertNotEqual(volumePresentation, brightnessPresentation)
   }
 
+  func testLatestLevelHUDWinsWhenBothAreVisible() {
+    XCTAssertEqual(
+      resolve(
+        volumeEnabled: true,
+        volumeVisible: true,
+        brightnessEnabled: true,
+        brightnessVisible: true,
+        lastLevelHUD: .volume
+      ),
+      .volume
+    )
+    XCTAssertEqual(
+      resolve(
+        volumeEnabled: true,
+        volumeVisible: true,
+        brightnessEnabled: true,
+        brightnessVisible: true,
+        lastLevelHUD: .brightness
+      ),
+      .brightness
+    )
+  }
+
   private func resolve(
     deviceEnabled: Bool = false,
     deviceVisible: Bool = false,
@@ -59,7 +82,8 @@ final class VelnorrPresentationResolverTests: XCTestCase {
     batteryEnabled: Bool = false,
     batteryVisible: Bool = false,
     brightnessEnabled: Bool = false,
-    brightnessVisible: Bool = false
+    brightnessVisible: Bool = false,
+    lastLevelHUD: VelnorrPresentationState? = nil
   ) -> VelnorrPresentationState {
     VelnorrPresentationResolver.resolve(
       base: .collapsed,
@@ -73,7 +97,8 @@ final class VelnorrPresentationResolverTests: XCTestCase {
       brightnessEnabled: brightnessEnabled,
       brightnessVisible: brightnessVisible,
       automaticTrackPeekVisible: false,
-      hasTrack: false
+      hasTrack: false,
+      lastLevelHUD: lastLevelHUD
     )
   }
 }

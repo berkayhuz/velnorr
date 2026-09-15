@@ -28,10 +28,15 @@ enum VelnorrPresentationResolver {
     brightnessEnabled: Bool,
     brightnessVisible: Bool,
     automaticTrackPeekVisible: Bool,
-    hasTrack: Bool
+    hasTrack: Bool,
+    lastLevelHUD: VelnorrPresentationState? = nil
   ) -> VelnorrPresentationState {
     guard !isMediaExpanded else { return base }
     if deviceEnabled && deviceVisible { return .deviceConnection }
+    if volumeEnabled && volumeVisible && brightnessEnabled && brightnessVisible {
+      if lastLevelHUD == .brightness { return .brightness }
+      return .volume
+    }
     if volumeEnabled && volumeVisible { return .volume }
     if batteryEnabled && batteryVisible { return .battery }
     if brightnessEnabled && brightnessVisible { return .brightness }

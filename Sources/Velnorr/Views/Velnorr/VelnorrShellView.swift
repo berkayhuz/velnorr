@@ -61,6 +61,7 @@ struct VelnorrShellView: View {
   @State private var leftHoverGeneration = 0
   @State private var isPointerInsideMedia = false
   @State private var mediaDismissTask: Task<Void, Never>?
+  @State private var lastLevelHUD: VelnorrPresentationState?
 
   init(
     metrics: NotchMetrics,
@@ -708,6 +709,14 @@ struct VelnorrShellView: View {
         onCapsLockVisibilityChange?(capsLockHUDEnabled && capsLock.isVisible)
       }
 
+      .onChange(of: audioVolume.eventSequence) { _ in
+        lastLevelHUD = .volume
+      }
+
+      .onChange(of: screenBrightness.eventSequence) { _ in
+        lastLevelHUD = .brightness
+      }
+
       .onChange(of: music.status.trackKey) { trackKey in
         handleTrackChange(trackKey)
       }
@@ -783,7 +792,8 @@ struct VelnorrShellView: View {
       brightnessEnabled: brightnessHUDEnabled,
       brightnessVisible: screenBrightness.isVisible,
       automaticTrackPeekVisible: isAutomaticTrackPeekVisible,
-      hasTrack: music.status.hasTrack
+      hasTrack: music.status.hasTrack,
+      lastLevelHUD: lastLevelHUD
     )
   }
 

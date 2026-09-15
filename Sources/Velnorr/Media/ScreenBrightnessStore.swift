@@ -9,6 +9,7 @@ import Foundation
 final class ScreenBrightnessStore: ObservableObject {
   @Published private(set) var brightness = 0.5
   @Published private(set) var isVisible = false
+  @Published private(set) var eventSequence = 0
   private let eventTap = SystemBrightnessEventTap()
   private let displayController = DisplayBrightnessController()
   private var hideTask: Task<Void, Never>?
@@ -92,6 +93,7 @@ final class ScreenBrightnessStore: ObservableObject {
 
   private func show(brightness: Double) {
     isVisible = true
+    eventSequence += 1
     scheduleHide()
   }
 

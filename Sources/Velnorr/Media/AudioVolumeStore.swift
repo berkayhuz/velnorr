@@ -8,6 +8,7 @@ import Foundation
 final class AudioVolumeStore: ObservableObject {
   @Published private(set) var volume: Double = 0
   @Published private(set) var isVisible = false
+  @Published private(set) var eventSequence = 0
 
   private let monitor = AudioOutputVolumeMonitor()
   private let eventTap = SystemVolumeEventTap()
@@ -40,6 +41,7 @@ final class AudioVolumeStore: ObservableObject {
   func showPreview() {
     volume = 0.65
     isVisible = true
+    eventSequence += 1
     scheduleHide()
   }
 
@@ -74,6 +76,7 @@ final class AudioVolumeStore: ObservableObject {
     }
 
     isVisible = true
+    eventSequence += 1
     scheduleHide()
   }
 
