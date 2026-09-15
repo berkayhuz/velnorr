@@ -22,6 +22,26 @@ final class BatteryChargeStoreTests: XCTestCase {
     XCTAssertNil(notificationMode(currentLevel: 79, previousLevel: 80))
   }
 
+  func testChargingNotificationsOnlyAppearAtTenPercentageBoundaries() {
+    XCTAssertNil(
+      notificationMode(
+        currentLevel: 61,
+        previousLevel: 60,
+        currentIsPluggedIn: true,
+        previousIsPluggedIn: true
+      )
+    )
+    XCTAssertEqual(
+      notificationMode(
+        currentLevel: 60,
+        previousLevel: 59,
+        currentIsPluggedIn: true,
+        previousIsPluggedIn: true
+      ),
+      .threshold
+    )
+  }
+
   func testUnpluggedNotificationOnlyAppearsWhenPowerStateChanges() {
     XCTAssertEqual(
       notificationMode(

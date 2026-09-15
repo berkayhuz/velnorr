@@ -219,10 +219,22 @@ final class BatteryChargeStore: ObservableObject {
       thresholdInterval > 0 && greenBatteryThreshold % thresholdInterval == 0
     let crossedGreenThreshold =
       crossesConfiguredGreenThreshold && !greenThresholdCoveredByCadence
-    let crossedBatteryThreshold =
-      thresholdBucket(for: previous.level, interval: thresholdInterval)
-      != thresholdBucket(for: current.level, interval: thresholdInterval)
+    let crossedBatteryThreshold = crossedBatteryThreshold(
+      from: previous.level,
+      to: current.level,
+      interval: thresholdInterval
+    )
     return crossedGreenThreshold || crossedBatteryThreshold ? .threshold : nil
+  }
+
+  private static func crossedBatteryThreshold(from previous: Int, to current: Int, interval: Int) -> Bool {
+    guard interval > 0, previous != current else { return false }
+
+    if current > previous {
+      return current / interval != previous / interval
+    }
+    return thresholdBucket(for: previous, interval: interval)
+      != thresholdBucket(for: current, interval: interval)
   }
 
   private static func thresholdBucket(for level: Int, interval: Int) -> Int? {
