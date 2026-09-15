@@ -2,7 +2,8 @@ import CoreGraphics
 import SwiftUI
 
 enum HUDLevelInteraction {
-  static let hoverExpansion: CGFloat = 24
+  static let hoverExpansion: CGFloat = 8
+  static let hoverScale: CGFloat = 1.02
 
   static func value(for locationX: CGFloat, width: CGFloat) -> Double {
     guard width > 0 else { return 0 }
@@ -30,12 +31,16 @@ struct InteractiveHUDLevelBar: View {
   @State private var isDragging = false
 
   private var displayedWidth: CGFloat {
-    isHovered || isDragging
+    isInteractive
       ? HUDLevelInteraction.expandedWidth(
         baseWidth: width,
         availableWidth: availableWidth
       )
       : width
+  }
+
+  private var isInteractive: Bool {
+    isHovered || isDragging
   }
 
   private var clampedValue: Double {
@@ -52,8 +57,11 @@ struct InteractiveHUDLevelBar: View {
           .fill(barColor.opacity(0.9))
           .frame(width: geometry.size.width * clampedValue)
       }
-      .frame(height: isHovered ? min(10, barHeight + 2) : barHeight)
+      .frame(height: barHeight)
       .frame(maxHeight: .infinity)
+      .scaleEffect(
+        !reduceMotion && isInteractive ? HUDLevelInteraction.hoverScale : 1
+      )
     }
     .frame(width: displayedWidth, height: 18)
     // Keep the whole 18-point control frame interactive, not only the thin
@@ -84,8 +92,8 @@ struct InteractiveHUDLevelBar: View {
       onInteractionChanged(hovering || isDragging)
     }
     .animation(
-      isDragging || reduceMotion ? nil : VelnorrAnimation.control,
-      value: displayedWidth
+      reduceMotion ? .easeOut(duration: 0.12) : .easeOut(duration: 0.18),
+      value: isInteractive
     )
     .accessibilityElement()
     .accessibilityLabel(accessibilityLabel)
