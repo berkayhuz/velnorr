@@ -10,6 +10,7 @@
     <img src="https://img.shields.io/badge/Swift-6.0-F05138?style=flat-square&logo=swift&logoColor=white" alt="Swift 6.0">
     <img src="https://img.shields.io/badge/UI-SwiftUI%20%2B%20AppKit-2563EB?style=flat-square" alt="SwiftUI and AppKit">
     <img src="https://img.shields.io/badge/status-production-22C55E?style=flat-square" alt="Production">
+    <img src="https://img.shields.io/github/downloads/berkayhuz/velnorr/total?style=flat-square&label=downloads" alt="GitHub Downloads">
   </p>
 </div>
 
