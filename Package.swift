@@ -12,6 +12,10 @@ let package = Package(
     .executableTarget(
       name: "Velnorr",
       path: "Sources/Velnorr",
+      exclude: [
+        "Resources/Default Hud.png",
+        "Resources/Music Panel.png",
+      ],
       resources: [
         .copy("Resources/Battery.svg"),
         .copy("Resources/velnorr-logo-curved.svg"),

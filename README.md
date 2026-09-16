@@ -32,7 +32,7 @@ When the macOS session is locked, Velnorr keeps the Dynamic Island visible with 
 </p>
 
 <p align="center">
-  <img src="./Music%20Panel.png" width="900" alt="Velnorr Music Panel">
+  <img src="./Sources/Velnorr/Resources/Music%20Panel.png" width="900" alt="Velnorr Music Panel">
 </p>
 
 <br>
@@ -42,7 +42,7 @@ When the macOS session is locked, Velnorr keeps the Dynamic Island visible with 
 </p>
 
 <p align="center">
-  <img src="./Default%20Hud.png" width="900" alt="Velnorr default HUD">
+  <img src="./Sources/Velnorr/Resources/Default%20Hud.png" width="900" alt="Velnorr default HUD">
 </p>
 
 ## Highlights
