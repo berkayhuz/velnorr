@@ -1,0 +1,52 @@
+import CoreGraphics
+
+enum VelnorrLockScreenLayout {
+  static let widgetSize = CGSize(width: 360, height: 170)
+  static let profilePhotoGap: CGFloat = 36
+
+  // loginwindow does not expose the avatar frame to third-party apps. This
+  // ratio follows the standard macOS lock-screen layout and keeps the card
+  // anchored to the avatar instead of drifting with the available frame.
+  static let profilePhotoTopRatioFromBottom: CGFloat = 0.176
+
+  static func profilePhotoTop(in screenFrame: CGRect) -> CGFloat {
+    screenFrame.minY + screenFrame.height * profilePhotoTopRatioFromBottom
+  }
+
+  static func lockIconX(
+    width: CGFloat,
+    topRadius: CGFloat,
+    centerGap: CGFloat
+  ) -> CGFloat {
+    sideIconX(
+      width: width,
+      topRadius: topRadius,
+      centerGap: centerGap,
+      isLeading: true
+    )
+  }
+
+  static func sideIconX(
+    width: CGFloat,
+    topRadius: CGFloat,
+    centerGap: CGFloat,
+    isLeading: Bool
+  ) -> CGFloat {
+    if centerGap == 0 {
+      return width / 2
+    }
+    // A physical notch removes the rounded outer corner from the visible
+    // interval at the icon's vertical center.
+    return isLeading ? (topRadius + width) / 2 : (width - topRadius) / 2
+  }
+
+  static func widgetFrame(for screenFrame: CGRect) -> CGRect {
+    let profilePhotoTop = profilePhotoTop(in: screenFrame)
+    return CGRect(
+      x: screenFrame.midX - widgetSize.width / 2,
+      y: profilePhotoTop + profilePhotoGap,
+      width: widgetSize.width,
+      height: widgetSize.height
+    )
+  }
+}

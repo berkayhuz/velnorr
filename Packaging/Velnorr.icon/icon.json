@@ -1,0 +1,42 @@
+{
+  "fill" : {
+    "solid" : "srgb:0.00000,0.00000,0.00000,0.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "light.png",
+          "name" : "Light",
+          "hidden-specializations" : [
+            {
+              "value" : false
+            },
+            {
+              "appearance" : "dark",
+              "value" : true
+            }
+          ]
+        },
+        {
+          "image-name" : "dark-icon@1024w.png",
+          "name" : "Dark",
+          "hidden-specializations" : [
+            {
+              "value" : true
+            },
+            {
+              "appearance" : "dark",
+              "value" : false
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [
+      "macOS"
+    ]
+  }
+}
