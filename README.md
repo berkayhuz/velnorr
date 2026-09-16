@@ -12,6 +12,12 @@
     <img src="https://img.shields.io/badge/status-production-22C55E?style=flat-square" alt="Production">
     <img src="https://img.shields.io/github/downloads/berkayhuz/velnorr/total?style=flat-square&label=downloads" alt="GitHub Downloads">
   </p>
+
+  <p>
+    <a href="https://github.com/berkayhuz/velnorr/releases/download/v1.0.0/Velnorr-1.0.0.dmg">
+      <img src="https://img.shields.io/badge/Download%20for%20macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS">
+    </a>
+  </p>
 </div>
 
 <hr>
