@@ -9,6 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   private var velnorrWindows: [VelnorrWindow] = []
   private var lockScreenWindows: [VelnorrLockScreenWindow] = []
   private var lockScreenSpaceManager: VelnorrLockScreenSpaceManager?
+  private var lockScreenSpaceUnavailable = false
   private var screenObserver: NSObjectProtocol?
   private var activeSpaceObserver: NSObjectProtocol?
   private var settingsObserver: NSObjectProtocol?
@@ -290,8 +291,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private func rebuildVelnorrs() {
-    if runtime.screenLock.isLocked, lockScreenSpaceManager == nil {
-      lockScreenSpaceManager = VelnorrLockScreenSpaceManager()
+    if runtime.screenLock.isLocked, lockScreenSpaceManager == nil,
+      !lockScreenSpaceUnavailable
+    {
+      if let manager = VelnorrLockScreenSpaceManager() {
+        lockScreenSpaceManager = manager
+      } else {
+        lockScreenSpaceUnavailable = true
+      }
     }
 
     velnorrWindows.forEach { $0.close() }
@@ -313,7 +320,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     if runtime.screenLock.isLocked {
       rebuildLockScreenWindows()
-      moveLockedWindowsToLockSpace()
     }
   }
 
@@ -348,7 +354,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     if runtime.screenLock.isLocked {
       rebuildLockScreenWindows()
-      moveLockedWindowsToLockSpace()
     }
   }
 
@@ -362,6 +367,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     renderedScreenLockState = isLocked
     if !isLocked {
+      lockScreenSpaceUnavailable = false
       lockScreenReorderTask?.cancel()
       lockScreenReorderTask = nil
       lockScreenReorderTaskIdentifier = nil
@@ -386,14 +392,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       lockScreenWindows.append(window)
       window.orderFrontRegardless()
     }
-    moveLockedWindowsToLockSpace()
     scheduleLockScreenReorder()
   }
 
   private func moveLockedWindowsToLockSpace() {
     guard runtime.screenLock.isLocked, let lockScreenSpaceManager else { return }
-    velnorrWindows.forEach { lockScreenSpaceManager.moveToLockScreen($0) }
-    lockScreenWindows.forEach { lockScreenSpaceManager.moveToLockScreen($0) }
+    let windows: [NSWindow] = velnorrWindows + lockScreenWindows
+    guard lockScreenSpaceManager.moveToLockScreen(windows) else {
+      lockScreenSpaceManager.stop()
+      self.lockScreenSpaceManager = nil
+      lockScreenSpaceUnavailable = true
+      windows.forEach { $0.orderFrontRegardless() }
+      return
+    }
   }
 
   private func scheduleLockScreenReorder() {

@@ -57,6 +57,11 @@ final class ScreenLockStoreTests: XCTestCase {
     XCTAssertEqual(VelnorrLockScreenSpaceManager.lockScreenSpaceLevel, 400)
   }
 
+  func testLockScreenSpaceMoveTreatsNonzeroSkyLightResultAsFailure() {
+    XCTAssertTrue(VelnorrLockScreenSpaceManager.didMoveWindows(returnCode: 0))
+    XCTAssertFalse(VelnorrLockScreenSpaceManager.didMoveWindows(returnCode: 1))
+  }
+
   func testSkyLightUsesVersionIndependentFrameworkPathFirst() {
     XCTAssertEqual(
       VelnorrLockScreenSpaceManager.skyLightFrameworkPaths,

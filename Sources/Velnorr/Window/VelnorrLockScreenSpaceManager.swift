@@ -13,6 +13,10 @@ final class VelnorrLockScreenSpaceManager {
     "/System/Library/PrivateFrameworks/SkyLight.framework/Versions/A/SkyLight",
   ]
 
+  static func didMoveWindows(returnCode: Int32) -> Bool {
+    return returnCode == 0
+  }
+
   private typealias MainConnectionID = @convention(c) () -> Int32
   private typealias SpaceCreate = @convention(c) (Int32, Int32, Int32) -> Int32
   private typealias SpaceDestroy = @convention(c) (Int32, Int32) -> Int32
@@ -99,14 +103,18 @@ final class VelnorrLockScreenSpaceManager {
     self.addWindowAndRemoveFromSpaces = addWindowAndRemoveFromSpaces
   }
 
-  func moveToLockScreen(_ window: NSWindow) {
-    guard isActive, window.windowNumber > 0 else { return }
-    _ = addWindowAndRemoveFromSpaces(
+  func moveToLockScreen(_ windows: [NSWindow]) -> Bool {
+    guard isActive else { return false }
+    let windowNumbers = windows.map(\.windowNumber).filter { $0 > 0 }
+    guard !windowNumbers.isEmpty else { return true }
+
+    let returnCode = addWindowAndRemoveFromSpaces(
       connection,
       space,
-      [window.windowNumber] as CFArray,
+      windowNumbers as CFArray,
       7
     )
+    return Self.didMoveWindows(returnCode: returnCode)
   }
 
   // AppDelegate owns this manager and calls stop before releasing it on
