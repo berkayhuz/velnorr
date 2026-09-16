@@ -25,6 +25,26 @@ The expanded music panel closes with an animation after three seconds of pointer
 
 When the macOS session is locked, Velnorr keeps the Dynamic Island visible with a lock icon on its left side and a configurable SF Symbol on its right, then presents the active music controls in a native SwiftUI Liquid Glass widget 36 pt above the login avatar. Unlocking removes the lock-screen widget and restores the normal interaction surface. This uses AppKit's login-window visibility plus a dynamically loaded SkyLight lock-screen Space, so availability can vary with macOS system updates; Velnorr falls back to the AppKit window level if SkyLight is unavailable.
 
+## Screenshots
+
+<p align="center">
+  <strong>Music Panel</strong>
+</p>
+
+<p align="center">
+  <img src="./Music%20Panel.png" width="900" alt="Velnorr Music Panel">
+</p>
+
+<br>
+
+<p align="center">
+  <strong>Default HUD</strong>
+</p>
+
+<p align="center">
+  <img src="./Default%20Hud.png" width="900" alt="Velnorr default HUD">
+</p>
+
 ## Highlights
 
 <table>
