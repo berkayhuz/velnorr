@@ -42,6 +42,29 @@ final class MusicStatusStoreTests: XCTestCase {
     XCTAssertGreaterThanOrEqual(store.status.elapsed, 60)
   }
 
+  func testMissingSnapshotPreservesTrackOnlyWhileScreenIsLocked() async throws {
+    let provider = TestNowPlayingProvider(
+      snapshot: snapshot(title: "Locked", isPlaying: false, elapsed: 30, duration: 180)
+    )
+    let store = MusicStatusStore(providers: [provider])
+    store.isScreenLocked = { true }
+    store.start()
+    defer { store.stop() }
+
+    try await Task.sleep(for: .milliseconds(50))
+    XCTAssertTrue(store.status.hasTrack)
+
+    provider.snapshot = nil
+    store.refresh()
+    try await Task.sleep(for: .milliseconds(50))
+    XCTAssertTrue(store.status.hasTrack)
+
+    store.isScreenLocked = { false }
+    store.refresh()
+    try await Task.sleep(for: .milliseconds(50))
+    XCTAssertFalse(store.status.hasTrack)
+  }
+
   func testPollingPolicySkipsStoppedProviders() {
     XCTAssertFalse(
       MediaPollingPolicy.shouldRead(
@@ -87,9 +110,9 @@ final class MusicStatusStoreTests: XCTestCase {
 private final class TestNowPlayingProvider: NowPlayingProviding, @unchecked Sendable {
   let source = MusicSource.music
   private let lock = NSLock()
-  private var storedSnapshot: NowPlayingSnapshot
+  private var storedSnapshot: NowPlayingSnapshot?
 
-  var snapshot: NowPlayingSnapshot {
+  var snapshot: NowPlayingSnapshot? {
     get {
       lock.lock()
       defer { lock.unlock() }
@@ -102,7 +125,7 @@ private final class TestNowPlayingProvider: NowPlayingProviding, @unchecked Send
     }
   }
 
-  init(snapshot: NowPlayingSnapshot) {
+  init(snapshot: NowPlayingSnapshot?) {
     storedSnapshot = snapshot
   }
 

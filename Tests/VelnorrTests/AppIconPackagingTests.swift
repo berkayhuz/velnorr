@@ -16,6 +16,8 @@ final class AppIconPackagingTests: XCTestCase {
         XCTAssertEqual(info["CFBundleIdentifier"] as? String, "com.berkayhuz.velnorr")
         XCTAssertEqual(info["CFBundlePackageType"] as? String, "APPL")
         XCTAssertEqual(info["CFBundleExecutable"] as? String, "Velnorr")
+        XCTAssertEqual(info["CFBundleShortVersionString"] as? String, "1.0.1")
+        XCTAssertEqual(info["CFBundleVersion"] as? String, "2")
         XCTAssertFalse((info["NSCameraUsageDescription"] as? String ?? "").isEmpty)
         XCTAssertFalse((info["NSCalendarsFullAccessUsageDescription"] as? String ?? "").isEmpty)
         XCTAssertFalse((info["NSRemindersFullAccessUsageDescription"] as? String ?? "").isEmpty)
@@ -31,6 +33,7 @@ final class AppIconPackagingTests: XCTestCase {
 
         XCTAssertTrue(script.contains("--run"))
         XCTAssertTrue(script.contains("open \"$APP_PATH\""))
+        XCTAssertTrue(script.contains("Velnorr-$APP_VERSION.dmg"))
         XCTAssertTrue(script.contains("cp \"$PROJECT_DIR/Packaging/Info.plist\" \"$APP_PATH/Contents/Info.plist\""))
     }
 

@@ -14,7 +14,7 @@
   </p>
 
   <p>
-    <a href="https://github.com/berkayhuz/velnorr/releases/download/v1.0.0/Velnorr-1.0.0.dmg">
+    <a href="https://github.com/berkayhuz/velnorr/releases/download/v1.0.1/Velnorr-1.0.1.dmg">
       <img src="https://img.shields.io/badge/Download%20for%20macOS-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Download for macOS">
     </a>
   </p>
@@ -118,7 +118,7 @@ CODE_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
   ./Packaging/build_dmg.sh --distribution
 ```
 
-Open `dist/Velnorr-1.0.0.dmg`, then drag `Velnorr.app` into `Applications`.
+Open `dist/Velnorr-1.0.1.dmg`, then drag `Velnorr.app` into `Applications`.
 
 The distribution mode requires a Developer ID certificate and performs local
 app/DMG signature and integrity verification. Notarize and staple the DMG with
@@ -229,7 +229,7 @@ When adding a user-visible string, add the key to every `Resources/*.lproj/Local
 
 ## Packaging notes
 
-`Packaging/build_dmg.sh` creates a self-contained `Velnorr.app`, copies the SwiftPM resource bundle and localization directories into the app bundle, signs it with an available local identity (or ad-hoc signing), and creates `dist/Velnorr-1.0.0.dmg`.
+`Packaging/build_dmg.sh` creates a self-contained `Velnorr.app`, copies the SwiftPM resource bundle and localization directories into the app bundle, signs it with an available local identity (or ad-hoc signing), and creates `dist/Velnorr-1.0.1.dmg`.
 
 Local development signing is not a substitute for release signing and notarization. Apple Events behavior, launch-at-login registration and permissions should be re-tested with the final signed build.
 

@@ -31,6 +31,9 @@ final class VelnorrRuntime {
     shelf = VelnorrShelfStore()
     shelfActions = VelnorrShelfActionService()
     camera = VelnorrCameraStore()
+    music.isScreenLocked = { [weak self] in
+      self?.screenLock.isLocked ?? false
+    }
   }
 
   func start() {

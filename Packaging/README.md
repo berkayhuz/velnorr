@@ -20,7 +20,7 @@ to appear under Terminal instead of Velnorr. The launched app is
 identifier used by System Settings, plus the camera entitlement required by
 macOS hardened runtime.
 
-The generated file is `dist/Velnorr-1.0.0.dmg`. Open it, drag
+The generated file is `dist/Velnorr-1.0.1.dmg`. Open it, drag
 `Velnorr.app` to `Applications`, then launch it from Applications.
 
 This command creates a local validation package. It prefers a Developer ID
@@ -39,10 +39,10 @@ The `--distribution` mode fails closed if a Developer ID identity is not
 available. Notarize and staple the resulting DMG before publishing it:
 
 ```sh
-xcrun notarytool submit dist/Velnorr-1.0.0.dmg \
+xcrun notarytool submit dist/Velnorr-1.0.1.dmg \
   --keychain-profile "YOUR_NOTARY_PROFILE" --wait
-xcrun stapler staple dist/Velnorr-1.0.0.dmg
-xcrun stapler validate dist/Velnorr-1.0.0.dmg
+xcrun stapler staple dist/Velnorr-1.0.1.dmg
+xcrun stapler validate dist/Velnorr-1.0.1.dmg
 spctl --assess --type execute --verbose=4 dist/Velnorr.app
 ```
 

@@ -4,7 +4,8 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 DIST_DIR="$PROJECT_DIR/dist"
 APP_PATH="$DIST_DIR/Velnorr.app"
-DMG_PATH="$DIST_DIR/Velnorr-1.0.0.dmg"
+APP_VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$PROJECT_DIR/Packaging/Info.plist")"
+DMG_PATH="$DIST_DIR/Velnorr-$APP_VERSION.dmg"
 STAGING_DIR="$DIST_DIR/.dmg-staging"
 ICON_BUILD_DIR="$DIST_DIR/.icon-build"
 

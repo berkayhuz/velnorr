@@ -9,7 +9,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   private var velnorrWindows: [VelnorrWindow] = []
   private var lockScreenWindows: [VelnorrLockScreenWindow] = []
   private var lockScreenSpaceManager: VelnorrLockScreenSpaceManager?
-  private var lockScreenSpaceUnavailable = false
   private var screenObserver: NSObjectProtocol?
   private var activeSpaceObserver: NSObjectProtocol?
   private var settingsObserver: NSObjectProtocol?
@@ -25,26 +24,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     UserDefaults.standard.register(defaults: AppSettings.defaults)
+
+    // Establish the SkyLight connection before the first lock transition.
+    lockScreenSpaceManager = VelnorrLockScreenSpaceManager()
+
     appliedSettings = AppSettingsSnapshot()
-    applyLaunchAtLogin(appliedSettings?.launchAtLogin ?? true)
+
+    applyLaunchAtLogin(
+      appliedSettings?.launchAtLogin ?? true
+    )
+
     NSApp.setActivationPolicy(.accessory)
+
     terminateOtherInstances()
+
+    // MARK: - Screen Lock Observer
 
     screenLockObserver = NotificationCenter.default.addObserver(
       forName: .velnorrScreenLockChanged,
       object: nil,
       queue: .main
     ) { [weak self] notification in
+
       let isLocked = notification.userInfo?["isLocked"] as? Bool
+
       Task { @MainActor [weak self] in
-        guard let isLocked else { return }
+        guard let isLocked else {
+          return
+        }
+
         self?.updateScreenLock(isLocked)
       }
     }
 
+    // MARK: - Runtime
+
     runtime.start()
+
     rebuildVelnorrs()
+
     renderedScreenLockState = runtime.screenLock.isLocked
+
+    // MARK: - Onboarding
 
     if AppSettings.shouldShowOnboarding(
       userDefaults: .standard,
@@ -56,15 +77,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       }
     }
 
+    // MARK: - Screen Changes
+
     screenObserver = NotificationCenter.default.addObserver(
       forName: NSApplication.didChangeScreenParametersNotification,
       object: nil,
       queue: .main
     ) { [weak self] _ in
+
       Task { @MainActor [weak self] in
         self?.rebuildVelnorrs()
       }
     }
+
+    // MARK: - Active Space Changes
 
     activeSpaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
       forName: NSWorkspace.activeSpaceDidChangeNotification,
@@ -72,43 +98,73 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
       queue: .main
     ) { [weak self] _ in
       Task { @MainActor [weak self] in
-        self?.updateVelnorrVisibility()
+        guard let self else { return }
+
+        self.updateVelnorrVisibility()
+
+        if self.runtime.screenLock.isLocked {
+          self.presentLockScreenWindowsNow()
+        }
       }
     }
+
+    // MARK: - Settings Changes
 
     settingsObserver = NotificationCenter.default.addObserver(
       forName: UserDefaults.didChangeNotification,
       object: nil,
       queue: .main
     ) { [weak self] _ in
+
       Task { @MainActor [weak self] in
         self?.applyChangedSettings()
       }
     }
+
+    // MARK: - Open Settings
 
     openSettingsObserver = NotificationCenter.default.addObserver(
       forName: .velnorrOpenSettings,
       object: nil,
       queue: .main
     ) { [weak self] _ in
+
       Task { @MainActor [weak self] in
         self?.showSettingsWindow()
       }
     }
 
+    // MARK: - Outside Click Monitor
+
     let dismiss: (NSEvent) -> Void = { [weak self] _ in
+
       Task { @MainActor [weak self] in
-        // A stale passthrough state can briefly route an velnorr click
+
+        // A stale passthrough state can briefly route a Velnorr click
         // to the app underneath. Never treat a click geometrically
-        // inside the velnorr as an outside-click dismissal.
-        guard !(self?.velnorrWindows.contains { window in
-          window.containsVelnorr(atScreenPoint: NSEvent.mouseLocation)
-        } ?? false) else { return }
-        NotificationCenter.default.post(name: .velnorrDismiss, object: nil)
+        // inside the Velnorr as an outside-click dismissal.
+        guard
+          !(self?.velnorrWindows.contains { window in
+            window.containsVelnorr(
+              atScreenPoint: NSEvent.mouseLocation
+            )
+          } ?? false)
+        else {
+          return
+        }
+
+        NotificationCenter.default.post(
+          name: .velnorrDismiss,
+          object: nil
+        )
       }
     }
+
     if let monitor = NSEvent.addGlobalMonitorForEvents(
-      matching: [.leftMouseDown, .rightMouseDown],
+      matching: [
+        .leftMouseDown,
+        .rightMouseDown,
+      ],
       handler: dismiss
     ) {
       clickMonitors.append(monitor)
@@ -225,7 +281,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private var currentAppVersion: String {
-    Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
+    Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.1"
   }
 
   private var isPackagedApplication: Bool {
@@ -291,16 +347,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private func rebuildVelnorrs() {
-    if runtime.screenLock.isLocked, lockScreenSpaceManager == nil,
-      !lockScreenSpaceUnavailable
-    {
-      if let manager = VelnorrLockScreenSpaceManager() {
-        lockScreenSpaceManager = manager
-      } else {
-        lockScreenSpaceUnavailable = true
-      }
-    }
-
     velnorrWindows.forEach { $0.close() }
     velnorrWindows.removeAll()
 
@@ -325,22 +371,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
   private func updateVelnorrVisibility() {
     let settings = appliedSettings ?? AppSettingsSnapshot()
+
     velnorrWindows.removeAll { window in
-      guard let screen = window.screen, shouldShowVelnorr(on: screen) else {
+      guard let screen = window.screen,
+        shouldShowVelnorr(on: screen)
+      else {
         window.close()
         return true
       }
+
       window.orderFrontRegardless()
       return false
     }
 
     // A Space/fullscreen transition can make a previously hidden display
     // eligible without changing the screen list.
-    let existingScreens = Set(velnorrWindows.compactMap { $0.screen?.displayID })
+    let existingScreens = Set(
+      velnorrWindows.compactMap {
+        $0.screen?.displayID
+      }
+    )
+
     for screen in NSScreen.screens
-      where shouldShowVelnorr(on: screen) && !existingScreens.contains(screen.displayID)
+    where shouldShowVelnorr(on: screen)
+      && !existingScreens.contains(screen.displayID)
     {
       let hasPhysicalNotch = screenHasPhysicalNotch(screen)
+
       let window = VelnorrWindow(
         screen: screen,
         configuredMode: settings.externalDisplayMode,
@@ -348,11 +405,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         heightConfiguration: settings.notchHeightConfiguration,
         runtime: runtime
       )
+
       velnorrWindows.append(window)
       window.orderFrontRegardless()
     }
 
-    if runtime.screenLock.isLocked {
+    // An active-Space change during locking must not recreate windows that
+    // have already been attached to the lock-screen Space.
+    if runtime.screenLock.isLocked,
+      lockScreenWindows.isEmpty
+    {
       rebuildLockScreenWindows()
     }
   }
@@ -367,7 +429,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     renderedScreenLockState = isLocked
     if !isLocked {
-      lockScreenSpaceUnavailable = false
       lockScreenReorderTask?.cancel()
       lockScreenReorderTask = nil
       lockScreenReorderTaskIdentifier = nil
@@ -377,61 +438,106 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     if !isLocked {
       lockScreenWindows.forEach { $0.close() }
       lockScreenWindows.removeAll()
-      lockScreenSpaceManager?.stop()
-      lockScreenSpaceManager = nil
     }
   }
 
   private func rebuildLockScreenWindows() {
     lockScreenWindows.forEach { $0.close() }
     lockScreenWindows.removeAll()
-    guard runtime.screenLock.isLocked else { return }
+
+    guard runtime.screenLock.isLocked else {
+      return
+    }
 
     for screen in NSScreen.screens where shouldShowVelnorr(on: screen) {
-      let window = VelnorrLockScreenWindow(screen: screen, runtime: runtime)
+      let window = VelnorrLockScreenWindow(
+        screen: screen,
+        runtime: runtime
+      )
+
       lockScreenWindows.append(window)
-      window.orderFrontRegardless()
     }
-    scheduleLockScreenReorder()
+
+    // Attach the window to the lock-screen Space before revealing it.
+    moveLockedWindowsToLockSpace()
+
+    scheduleLockScreenFallback()
+  }
+
+  private func presentLockScreenWindowsNow() {
+    guard runtime.screenLock.isLocked else {
+      return
+    }
+
+    guard !lockScreenWindows.isEmpty else {
+      return
+    }
+
+    moveLockedWindowsToLockSpace()
+
+    lockScreenWindows.forEach { window in
+      window.presentAfterLockTransition()
+    }
   }
 
   private func moveLockedWindowsToLockSpace() {
-    guard runtime.screenLock.isLocked, let lockScreenSpaceManager else { return }
-    let windows: [NSWindow] = velnorrWindows + lockScreenWindows
-    guard lockScreenSpaceManager.moveToLockScreen(windows) else {
-      lockScreenSpaceManager.stop()
-      self.lockScreenSpaceManager = nil
-      lockScreenSpaceUnavailable = true
-      windows.forEach { $0.orderFrontRegardless() }
+    guard
+      runtime.screenLock.isLocked,
+      let lockScreenSpaceManager
+    else {
       return
+    }
+
+    let windows: [NSWindow] =
+      velnorrWindows + lockScreenWindows
+
+    guard !windows.isEmpty else {
+      return
+    }
+
+    // SkyLight return semantics vary by macOS release, so window lifecycle
+    // must not depend on the undocumented result code alone.
+    lockScreenSpaceManager.moveToLockScreen(windows)
+
+    windows.forEach {
+      $0.orderFrontRegardless()
+      $0.displayIfNeeded()
     }
   }
 
-  private func scheduleLockScreenReorder() {
+  private func scheduleLockScreenFallback() {
     lockScreenReorderTask?.cancel()
 
     let identifier = UUID()
     lockScreenReorderTaskIdentifier = identifier
+
     lockScreenReorderTask = Task { @MainActor [weak self] in
       defer {
-        if let self, self.lockScreenReorderTaskIdentifier == identifier {
+        if let self,
+          self.lockScreenReorderTaskIdentifier == identifier
+        {
           self.lockScreenReorderTask = nil
           self.lockScreenReorderTaskIdentifier = nil
         }
       }
 
       do {
-        // loginwindow finishes its lock transition after the lock notification;
-        // reorder once after that hand-off instead of polling indefinitely.
-        try await Task.sleep(for: .milliseconds(750))
+        // Usually activeSpaceDidChange presents first. This is only a bounded
+        // fallback for systems that do not deliver that notification.
+        try await Task.sleep(for: .milliseconds(250))
       } catch {
         return
       }
 
-      guard let self, !Task.isCancelled, self.runtime.screenLock.isLocked else { return }
-      self.moveLockedWindowsToLockSpace()
-      self.velnorrWindows.forEach { $0.orderFrontRegardless() }
-      self.lockScreenWindows.forEach { $0.orderFrontRegardless() }
+      guard
+        let self,
+        !Task.isCancelled,
+        self.runtime.screenLock.isLocked
+      else {
+        return
+      }
+
+      self.presentLockScreenWindowsNow()
     }
   }
 

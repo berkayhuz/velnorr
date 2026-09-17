@@ -11,7 +11,7 @@ final class MusicStatusStore: ObservableObject {
   }
 
   @Published private(set) var status = MusicStatus()
-
+  var isScreenLocked: (@MainActor () -> Bool)?
   private let providers: [any NowPlayingProviding]
   private let artworkService: ArtworkService
   private let mediaApplicationLauncher: any MediaApplicationLaunching
@@ -235,7 +235,12 @@ final class MusicStatusStore: ObservableObject {
   private func apply(_ selected: SourcedNowPlayingSnapshot?) {
     expirePendingPlaybackStateIfNeeded()
     guard let selected else {
+      if isScreenLocked?() == true && status.hasTrack {
+        return
+      }
+
       guard pendingPlaybackState == nil, status.hasTrack else { return }
+
       artworkTask?.cancel()
       artworkTask = nil
       artworkTaskIdentifier = nil

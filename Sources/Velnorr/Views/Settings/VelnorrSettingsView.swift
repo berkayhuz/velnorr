@@ -895,7 +895,7 @@ private struct AdditionalSettingsPage: View {
       case .about:
         Section {
           AboutLogoView()
-          LabeledContent(L("Version"), value: "1.0.0")
+          LabeledContent(L("Version"), value: "1.0.1")
           LabeledContent(L("Build"), value: L("Release"))
           LabeledContent(L("Developer"), value: "Berkay Huz")
           LabeledContent(L("Studio"), value: "Huzstudio")

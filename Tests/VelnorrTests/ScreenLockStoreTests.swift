@@ -1,6 +1,7 @@
 import AppKit
 import CoreGraphics
 import XCTest
+
 @testable import Velnorr
 
 @MainActor
@@ -57,9 +58,20 @@ final class ScreenLockStoreTests: XCTestCase {
     XCTAssertEqual(VelnorrLockScreenSpaceManager.lockScreenSpaceLevel, 400)
   }
 
-  func testLockScreenSpaceMoveTreatsNonzeroSkyLightResultAsFailure() {
-    XCTAssertTrue(VelnorrLockScreenSpaceManager.didMoveWindows(returnCode: 0))
-    XCTAssertFalse(VelnorrLockScreenSpaceManager.didMoveWindows(returnCode: 1))
+  func testLockScreenPresentationStartsWhenTrackArrivesAfterSpaceIsReady() {
+    var state = VelnorrLockScreenPresentationState()
+
+    XCTAssertFalse(state.markReady())
+    XCTAssertTrue(state.updateTrackAvailability(true))
+    XCTAssertFalse(state.updateTrackAvailability(true))
+  }
+
+  func testLockScreenPresentationStartsWhenSpaceBecomesReadyAfterTrack() {
+    var state = VelnorrLockScreenPresentationState()
+
+    XCTAssertFalse(state.updateTrackAvailability(true))
+    XCTAssertTrue(state.markReady())
+    XCTAssertFalse(state.markReady())
   }
 
   func testSkyLightUsesVersionIndependentFrameworkPathFirst() {
