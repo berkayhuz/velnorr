@@ -9,30 +9,21 @@ import CoreGraphics
 /// must be checked explicitly.
 @MainActor
 enum SystemEventTapPermission {
-  private static var didRequestAccessibility = false
-  private static var didRequestListenEvents = false
-
   static var isGranted: Bool {
-    AXIsProcessTrusted() && CGPreflightListenEventAccess()
+    // Startup is automatic at login, so it must remain a status check only.
+    // Permission UI is opened explicitly from onboarding instead.
+    SystemEventTapPermissionStatus(
+      accessibilityGranted: AXIsProcessTrusted(),
+      listenEventsGranted: CGPreflightListenEventAccess()
+    ).isGranted
   }
+}
 
-  @discardableResult
-  static func requestIfNeeded() -> Bool {
-    let accessibilityGranted = AXIsProcessTrusted()
-    if !accessibilityGranted && !didRequestAccessibility {
-      didRequestAccessibility = true
-      // Keep the key local instead of reading the SDK's mutable CFString
-      // global from Swift's concurrency checking context.
-      let promptKey = "AXTrustedCheckOptionPrompt"
-      _ = AXIsProcessTrustedWithOptions([promptKey: true] as CFDictionary)
-    }
+struct SystemEventTapPermissionStatus {
+  let accessibilityGranted: Bool
+  let listenEventsGranted: Bool
 
-    let listenGranted = CGPreflightListenEventAccess()
-    if !listenGranted && !didRequestListenEvents {
-      didRequestListenEvents = true
-      _ = CGRequestListenEventAccess()
-    }
-
-    return accessibilityGranted && listenGranted
+  var isGranted: Bool {
+    accessibilityGranted && listenEventsGranted
   }
 }

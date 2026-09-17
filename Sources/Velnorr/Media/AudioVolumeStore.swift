@@ -297,7 +297,7 @@ private final class SystemVolumeEventTap: @unchecked Sendable {
   @MainActor
   func start(onEvent: @escaping (SystemVolumeEvent) -> Void) -> Bool {
     stop()
-    guard SystemEventTapPermission.requestIfNeeded() else { return false }
+    guard SystemEventTapPermission.isGranted else { return false }
 
     // `systemDefined` is not exposed by the Swift CoreGraphics overlay on
     // every SDK, but its Quartz event type is stable at raw value 14.

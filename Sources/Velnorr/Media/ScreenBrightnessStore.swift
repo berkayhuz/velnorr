@@ -157,7 +157,7 @@ private final class SystemBrightnessEventTap: @unchecked Sendable {
   @MainActor
   func start(onEvent: @escaping (SystemBrightnessEvent) -> Void) -> Bool {
     stop()
-    guard SystemEventTapPermission.requestIfNeeded() else { return false }
+    guard SystemEventTapPermission.isGranted else { return false }
     handler = onEvent
     guard
       let tap = CGEvent.tapCreate(

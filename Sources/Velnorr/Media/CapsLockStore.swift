@@ -87,7 +87,7 @@ private final class CapsLockEventTap: @unchecked Sendable {
   @MainActor
   func start(onChange: @escaping (Bool) -> Void) -> Bool {
     stop()
-    guard SystemEventTapPermission.requestIfNeeded() else { return false }
+    guard SystemEventTapPermission.isGranted else { return false }
 
     handler = onChange
     let mask = CGEventMask(1 << CGEventType.flagsChanged.rawValue)
