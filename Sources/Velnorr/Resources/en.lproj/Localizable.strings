@@ -184,15 +184,6 @@
 "Caps Lock, redesigned" = "Caps Lock, redesigned";
 "Velnorr gives Caps Lock its own subtle indicator so your HUD stays clean and familiar." = "Velnorr gives Caps Lock its own subtle indicator so your HUD stays clean and familiar.";
 "One-time setup" = "One-time setup";
-"Velnorr needs two macOS permissions to capture system media keys and replace the native volume and brightness HUDs." = "Velnorr needs two macOS permissions to capture system media keys and replace the native volume and brightness HUDs.";
-"Input Monitoring" = "Input Monitoring";
-"Required to receive and handle system media key events." = "Required to receive and handle system media key events.";
-"Required to listen for volume and brightness key events." = "Required to listen for volume and brightness key events.";
-"Open Accessibility Settings" = "Open Accessibility Settings";
-"Open Input Monitoring Settings" = "Open Input Monitoring Settings";
-"Permission granted" = "Permission granted";
-"Permission needed" = "Permission needed";
-"Your permissions are checked automatically when Velnorr starts." = "Your permissions are checked automatically when Velnorr starts.";
 "You can change these permissions later in System Settings." = "You can change these permissions later in System Settings.";
 "Finish setup" = "Finish setup";
 "Velnorr Setup" = "Velnorr Setup";
@@ -306,5 +297,15 @@
 "Mirror camera" = "Mirror camera";
 "Camera access is only needed when Mirror is enabled." = "Camera access is only needed when Mirror is enabled.";
 "No camera was detected; Mirror is optional." = "No camera was detected; Mirror is optional.";
-"Velnorr needs Accessibility and Input Monitoring to capture system keys and replace the native volume, brightness, and Caps Lock HUDs. Calendar, Reminders, and Mirror camera access are optional." = "Velnorr needs Accessibility and Input Monitoring to capture system keys and replace the native volume, brightness, and Caps Lock HUDs. Calendar, Reminders, and Mirror camera access are optional.";
 "System permissions power the native HUD replacement. Calendar, Reminders, and Mirror camera access are optional and can be enabled here when you want those panels ready." = "System permissions power the native HUD replacement. Calendar, Reminders, and Mirror camera access are optional and can be enabled here when you want those panels ready.";
+
+/* Device Control & Data Access */
+"Velnorr needs two macOS permissions to intercept system keys and replace the native volume, brightness, and Caps Lock HUDs." = "Velnorr needs two macOS permissions to intercept system keys and replace the native volume, brightness, and Caps Lock HUDs.";
+"Enable both permissions below so Velnorr can receive system key events and replace the native macOS HUDs." = "Enable both permissions below so Velnorr can receive system key events and replace the native macOS HUDs.";
+"Accessibility permission is enabled." = "Accessibility permission is enabled.";
+"Required to intercept and suppress native macOS HUD events." = "Required to intercept and suppress native macOS HUD events.";
+"Device Control & Data Access" = "Device Control & Data Access";
+"Device Control & Data Access permission is enabled." = "Device Control & Data Access permission is enabled.";
+"Required for Velnorr to receive volume, brightness, and Caps Lock key events." = "Required for Velnorr to receive volume, brightness, and Caps Lock key events.";
+"After enabling Velnorr in System Settings, return to the app. Velnorr will detect the permission automatically." = "After enabling Velnorr in System Settings, return to the app. Velnorr will detect the permission automatically.";
+"In System Settings, look under Privacy & Security → Device Control & Data Access and enable Velnorr." = "In System Settings, look under Privacy & Security → Device Control & Data Access and enable Velnorr.";

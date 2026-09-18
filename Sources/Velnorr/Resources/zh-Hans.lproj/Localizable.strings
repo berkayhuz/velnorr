@@ -183,15 +183,6 @@
 "Caps Lock, redesigned" = "Caps Lock, redesigned";
 "Velnorr gives Caps Lock its own subtle indicator so your HUD stays clean and familiar." = "Velnorr gives Caps Lock its own subtle indicator so your HUD stays clean and familiar.";
 "One-time setup" = "一次性设置";
-"Velnorr needs two macOS permissions to capture system media keys and replace the native volume and brightness HUDs." = "Velnorr 需要两项 macOS 权限来捕获系统媒体按键，并替代系统原生的音量和亮度 HUD。";
-"Input Monitoring" = "输入监控";
-"Required to receive and handle system media key events." = "接收和处理系统媒体按键事件所需。";
-"Required to listen for volume and brightness key events." = "监听音量和亮度按键事件所需。";
-"Open Accessibility Settings" = "打开辅助功能设置";
-"Open Input Monitoring Settings" = "打开输入监控设置";
-"Permission granted" = "已获得权限";
-"Permission needed" = "需要权限";
-"Your permissions are checked automatically when Velnorr starts." = "Velnorr 启动时会自动检查权限。";
 "You can change these permissions later in System Settings." = "稍后可以在系统设置中更改这些权限。";
 "Finish setup" = "完成设置";
 "Velnorr Setup" = "Velnorr 设置";
@@ -305,5 +296,15 @@
 "Mirror camera" = "镜像摄像头";
 "Camera access is only needed when Mirror is enabled." = "仅在启用镜像时才需要摄像头访问权限。";
 "No camera was detected; Mirror is optional." = "未检测到摄像头；镜像为可选功能。";
-"Velnorr needs Accessibility and Input Monitoring to capture system keys and replace the native volume, brightness, and Caps Lock HUDs. Calendar, Reminders, and Mirror camera access are optional." = "Velnorr需要辅助功能和输入监控权限来捕获系统按键，并替换原生音量、亮度和大写锁定HUD。日历、提醒事项和镜像摄像头访问权限为可选。";
 "System permissions power the native HUD replacement. Calendar, Reminders, and Mirror camera access are optional and can be enabled here when you want those panels ready." = "系统权限用于替换原生HUD。日历、提醒事项和镜像摄像头访问权限为可选；需要使用这些面板时，可在此处启用。";
+
+/* Device Control & Data Access */
+"Velnorr needs two macOS permissions to intercept system keys and replace the native volume, brightness, and Caps Lock HUDs." = "Velnorr 需要两项 macOS 权限，才能拦截系统按键并替换原生的音量、亮度和 Caps Lock HUD。";
+"Enable both permissions below so Velnorr can receive system key events and replace the native macOS HUDs." = "启用下方两项权限，让 Velnorr 能够接收系统按键事件并替换 macOS 原生 HUD。";
+"Accessibility permission is enabled." = "辅助功能权限已启用。";
+"Required to intercept and suppress native macOS HUD events." = "用于拦截并阻止 macOS 原生 HUD 事件。";
+"Device Control & Data Access" = "设备控制与数据访问";
+"Device Control & Data Access permission is enabled." = "设备控制与数据访问权限已启用。";
+"Required for Velnorr to receive volume, brightness, and Caps Lock key events." = "用于让 Velnorr 接收音量、亮度和 Caps Lock 按键事件。";
+"After enabling Velnorr in System Settings, return to the app. Velnorr will detect the permission automatically." = "在系统设置中启用 Velnorr 后，请返回应用。Velnorr 会自动检测权限。";
+"In System Settings, look under Privacy & Security → Device Control & Data Access and enable Velnorr." = "在系统设置中，前往“隐私与安全性”→“设备控制与数据访问”，然后启用 Velnorr。";

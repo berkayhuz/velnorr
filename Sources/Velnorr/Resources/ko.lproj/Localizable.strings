@@ -183,15 +183,6 @@
 "Caps Lock, redesigned" = "Caps Lock, redesigned";
 "Velnorr gives Caps Lock its own subtle indicator so your HUD stays clean and familiar." = "Velnorr gives Caps Lock its own subtle indicator so your HUD stays clean and familiar.";
 "One-time setup" = "초기 설정";
-"Velnorr needs two macOS permissions to capture system media keys and replace the native volume and brightness HUDs." = "Velnorr이 미디어 키를 감지하고 macOS 기본 음량 및 밝기 HUD를 대체하려면 두 가지 macOS 권한이 필요합니다.";
-"Input Monitoring" = "입력 모니터링";
-"Required to receive and handle system media key events." = "시스템 미디어 키 이벤트를 수신하고 처리하는 데 필요합니다.";
-"Required to listen for volume and brightness key events." = "음량 및 밝기 키 이벤트를 감지하는 데 필요합니다.";
-"Open Accessibility Settings" = "손쉬운 사용 설정 열기";
-"Open Input Monitoring Settings" = "입력 모니터링 설정 열기";
-"Permission granted" = "권한 허용됨";
-"Permission needed" = "권한 필요";
-"Your permissions are checked automatically when Velnorr starts." = "Velnorr이 시작될 때 권한을 자동으로 확인합니다.";
 "You can change these permissions later in System Settings." = "나중에 시스템 설정에서 이 권한을 변경할 수 있습니다.";
 "Finish setup" = "설정 완료";
 "Velnorr Setup" = "Velnorr 설정";
@@ -305,5 +296,15 @@
 "Mirror camera" = "미러 카메라";
 "Camera access is only needed when Mirror is enabled." = "카메라 접근은 미러가 활성화된 경우에만 필요합니다.";
 "No camera was detected; Mirror is optional." = "카메라가 감지되지 않았습니다. 미러는 선택 사항입니다.";
-"Velnorr needs Accessibility and Input Monitoring to capture system keys and replace the native volume, brightness, and Caps Lock HUDs. Calendar, Reminders, and Mirror camera access are optional." = "Velnorr가 시스템 키를 감지하고 기본 음량, 밝기 및 Caps Lock HUD를 대체하려면 손쉬운 사용 및 입력 모니터링 권한이 필요합니다. 캘린더, 미리 알림 및 미러 카메라 접근은 선택 사항입니다.";
 "System permissions power the native HUD replacement. Calendar, Reminders, and Mirror camera access are optional and can be enabled here when you want those panels ready." = "시스템 권한은 기본 HUD 대체 기능에 사용됩니다. 캘린더, 미리 알림 및 미러 카메라 접근은 선택 사항이며 패널을 사용하려는 경우 여기에서 활성화할 수 있습니다.";
+
+/* Device Control & Data Access */
+"Velnorr needs two macOS permissions to intercept system keys and replace the native volume, brightness, and Caps Lock HUDs." = "Velnorr가 시스템 키를 가로채고 macOS 기본 볼륨, 밝기 및 Caps Lock HUD를 대체하려면 두 가지 macOS 권한이 필요합니다.";
+"Enable both permissions below so Velnorr can receive system key events and replace the native macOS HUDs." = "Velnorr가 시스템 키 이벤트를 수신하고 macOS 기본 HUD를 대체할 수 있도록 아래 두 권한을 모두 활성화하세요.";
+"Accessibility permission is enabled." = "손쉬운 사용 권한이 활성화되어 있습니다.";
+"Required to intercept and suppress native macOS HUD events." = "macOS 기본 HUD 이벤트를 가로채고 억제하는 데 필요합니다.";
+"Device Control & Data Access" = "기기 제어 및 데이터 접근";
+"Device Control & Data Access permission is enabled." = "기기 제어 및 데이터 접근 권한이 활성화되어 있습니다.";
+"Required for Velnorr to receive volume, brightness, and Caps Lock key events." = "Velnorr가 볼륨, 밝기 및 Caps Lock 키 이벤트를 수신하는 데 필요합니다.";
+"After enabling Velnorr in System Settings, return to the app. Velnorr will detect the permission automatically." = "시스템 설정에서 Velnorr를 활성화한 후 앱으로 돌아오세요. Velnorr가 권한을 자동으로 감지합니다.";
+"In System Settings, look under Privacy & Security → Device Control & Data Access and enable Velnorr." = "시스템 설정에서 개인정보 보호 및 보안 → 기기 제어 및 데이터 접근으로 이동한 후 Velnorr를 활성화하세요.";

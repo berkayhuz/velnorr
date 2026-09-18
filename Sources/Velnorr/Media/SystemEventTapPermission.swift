@@ -1,18 +1,39 @@
-import ApplicationServices
+@preconcurrency import ApplicationServices
 import CoreGraphics
 
-/// Checks whether macOS has exposed either supported authorization path for
-/// creating a session event tap.
 @MainActor
 enum SystemEventTapPermission {
-  static var canAttemptActiveTap: Bool {
-    // Startup is automatic at login, so it must remain a status check only.
-    // `CGEvent.tapCreate` remains the authoritative capability check because
-    // either preflight can report a false negative across macOS versions.
+
+  static var status: SystemEventTapPermissionStatus {
     SystemEventTapPermissionStatus(
       accessibilityGranted: AXIsProcessTrusted(),
       listenEventsGranted: CGPreflightListenEventAccess()
-    ).canAttemptActiveTap
+    )
+  }
+
+  /// Velnorr `.defaultTap` ile aktif bir event tap kullanıyor.
+  ///
+  /// Accessibility aktif filtreleme için ana yetkidir.
+  ///
+  /// Input Monitoring bazı macOS / keyboard event yollarında
+  /// ek dinleme erişimi sağlayabilir, ancak PostEvent burada
+  /// bir ön koşul değildir.
+  static var canAttemptActiveTap: Bool {
+    status.accessibilityGranted
+  }
+
+  @discardableResult
+  static func requestAccessibility() -> Bool {
+    let options: CFDictionary = [
+      "AXTrustedCheckOptionPrompt": true
+    ] as CFDictionary
+
+    return AXIsProcessTrustedWithOptions(options)
+  }
+
+  @discardableResult
+  static func requestInputMonitoring() -> Bool {
+    CGRequestListenEventAccess()
   }
 }
 
@@ -21,12 +42,15 @@ struct SystemEventTapPermissionStatus {
   let listenEventsGranted: Bool
 
   var canAttemptActiveTap: Bool {
-    accessibilityGranted || listenEventsGranted
+    accessibilityGranted
   }
 }
 
 enum SystemEventTapLifecycle {
-  static func wasDisabled(_ type: CGEventType) -> Bool {
-    type == .tapDisabledByTimeout || type == .tapDisabledByUserInput
+  static func wasDisabled(
+    _ type: CGEventType
+  ) -> Bool {
+    type == .tapDisabledByTimeout
+      || type == .tapDisabledByUserInput
   }
 }

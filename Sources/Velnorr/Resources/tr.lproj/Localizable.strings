@@ -183,15 +183,6 @@
 "Caps Lock, redesigned" = "Yeniden tasarlanan Caps Lock";
 "Velnorr gives Caps Lock its own subtle indicator so your HUD stays clean and familiar." = "Velnorr, HUD'unuzun temiz ve tanıdık kalması için Caps Lock'a özel, zarif bir gösterge sunar.";
 "One-time setup" = "İlk kurulum";
-"Velnorr needs two macOS permissions to capture system media keys and replace the native volume and brightness HUDs." = "Velnorr'un sistem medya tuşlarını yakalayıp yerleşik ses ve parlaklık HUD'larının yerine geçmesi için iki macOS iznine ihtiyacı var.";
-"Input Monitoring" = "Girdi İzleme";
-"Required to receive and handle system media key events." = "Sistem medya tuşu olaylarını almak ve işlemek için gereklidir.";
-"Required to listen for volume and brightness key events." = "Ses ve parlaklık tuşu olaylarını dinlemek için gereklidir.";
-"Open Accessibility Settings" = "Erişilebilirlik Ayarlarını Aç";
-"Open Input Monitoring Settings" = "Girdi İzleme Ayarlarını Aç";
-"Permission granted" = "İzin verildi";
-"Permission needed" = "İzin gerekli";
-"Your permissions are checked automatically when Velnorr starts." = "Velnorr başlatıldığında izinleriniz otomatik olarak kontrol edilir.";
 "You can change these permissions later in System Settings." = "Bu izinleri daha sonra Sistem Ayarları'ndan değiştirebilirsiniz.";
 "Finish setup" = "Kurulumu Tamamla";
 "Velnorr Setup" = "Velnorr Kurulumu";
@@ -305,5 +296,15 @@
 "Mirror camera" = "Ayna kamerası";
 "Camera access is only needed when Mirror is enabled." = "Kamera erişimi yalnızca Ayna etkinleştirildiğinde gerekir.";
 "No camera was detected; Mirror is optional." = "Kamera algılanmadı; Ayna isteğe bağlıdır.";
-"Velnorr needs Accessibility and Input Monitoring to capture system keys and replace the native volume, brightness, and Caps Lock HUDs. Calendar, Reminders, and Mirror camera access are optional." = "Velnorr'un sistem tuşlarını yakalayıp yerleşik ses, parlaklık ve Caps Lock göstergelerini değiştirmesi için Erişilebilirlik ve Girdi İzleme gerekir. Takvim, Anımsatıcılar ve Ayna kamerası erişimi isteğe bağlıdır.";
 "System permissions power the native HUD replacement. Calendar, Reminders, and Mirror camera access are optional and can be enabled here when you want those panels ready." = "Sistem izinleri yerleşik göstergelerin değiştirilmesini sağlar. Takvim, Anımsatıcılar ve Ayna kamerası erişimi isteğe bağlıdır; bu panelleri kullanmak istediğinizde buradan etkinleştirebilirsiniz.";
+
+/* Device Control & Data Access */
+"Velnorr needs two macOS permissions to intercept system keys and replace the native volume, brightness, and Caps Lock HUDs." = "Velnorr'un sistem tuşlarını yakalayıp yerleşik ses, parlaklık ve Caps Lock HUD'larının yerine geçebilmesi için iki macOS iznine ihtiyacı var.";
+"Enable both permissions below so Velnorr can receive system key events and replace the native macOS HUDs." = "Velnorr'un sistem tuşu olaylarını alabilmesi ve yerleşik macOS HUD'larının yerine geçebilmesi için aşağıdaki iki izni etkinleştirin.";
+"Accessibility permission is enabled." = "Erişilebilirlik izni etkin.";
+"Required to intercept and suppress native macOS HUD events." = "Yerleşik macOS HUD olaylarını yakalamak ve engellemek için gereklidir.";
+"Device Control & Data Access" = "Aygıt Denetimi ve Veri Erişimi";
+"Device Control & Data Access permission is enabled." = "Aygıt Denetimi ve Veri Erişimi izni etkin.";
+"Required for Velnorr to receive volume, brightness, and Caps Lock key events." = "Velnorr'un ses, parlaklık ve Caps Lock tuş olaylarını alabilmesi için gereklidir.";
+"After enabling Velnorr in System Settings, return to the app. Velnorr will detect the permission automatically." = "Sistem Ayarları'nda Velnorr'u etkinleştirdikten sonra uygulamaya dönün. Velnorr izni otomatik olarak algılar.";
+"In System Settings, look under Privacy & Security → Device Control & Data Access and enable Velnorr." = "Sistem Ayarları'nda Gizlilik ve Güvenlik → Aygıt Denetimi ve Veri Erişimi bölümüne gidin ve Velnorr'u etkinleştirin.";

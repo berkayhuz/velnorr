@@ -117,26 +117,38 @@ final class ScreenBrightnessStore: ObservableObject {
 
     let install: @MainActor () -> Bool = { [weak self] in
       guard let self else { return false }
+
       return self.eventTap.start { [weak self] event in
-        Task { @MainActor [weak self] in self?.apply(event) }
+        Task { @MainActor [weak self] in
+          self?.apply(event)
+        }
       }
     }
 
-    guard !install() else { return }
+    guard !install() else {
+      return
+    }
 
-    // Permissions can be granted in System Settings while Velnorr remains
-    // running. Retry briefly so the user does not need to quit and relaunch.
+    // Permissions can be granted while Velnorr remains open.
+    // Keep retrying until the event tap can be installed
+    // or the store is stopped.
     eventTapRetryTask = Task { @MainActor [weak self] in
-      for _ in 0..<30 {
+      while !Task.isCancelled {
         try? await Task.sleep(for: .seconds(1))
-        guard !Task.isCancelled else { return }
-        guard let self else { return }
+
+        guard !Task.isCancelled else {
+          return
+        }
+
+        guard let self else {
+          return
+        }
+
         if install() {
           self.eventTapRetryTask = nil
           return
         }
       }
-      self?.eventTapRetryTask = nil
     }
   }
 

@@ -28,13 +28,40 @@ final class AppIconPackagingTests: XCTestCase {
             .deletingLastPathComponent()
             .deletingLastPathComponent()
             .deletingLastPathComponent()
-        let scriptURL = projectURL.appendingPathComponent("Packaging/build_dmg.sh")
-        let script = try String(contentsOf: scriptURL, encoding: .utf8)
 
-        XCTAssertTrue(script.contains("--run"))
-        XCTAssertTrue(script.contains("open \"$APP_PATH\""))
-        XCTAssertTrue(script.contains("Velnorr-$APP_VERSION.dmg"))
-        XCTAssertTrue(script.contains("cp \"$PROJECT_DIR/Packaging/Info.plist\" \"$APP_PATH/Contents/Info.plist\""))
+        let scriptURL = projectURL.appendingPathComponent(
+            "Packaging/build_dmg.sh"
+        )
+
+        let script = try String(
+            contentsOf: scriptURL,
+            encoding: .utf8
+        )
+
+        XCTAssertTrue(
+            script.contains("--run")
+        )
+
+        XCTAssertTrue(
+            script.contains("open \"$APP_PATH\"")
+        )
+
+        XCTAssertTrue(
+            script.contains("Velnorr-$APP_VERSION.dmg")
+        )
+
+        // Do not depend on shell formatting or line breaks.
+        XCTAssertTrue(
+            script.contains(
+                "\"$PROJECT_DIR/Packaging/Info.plist\""
+            )
+        )
+
+        XCTAssertTrue(
+            script.contains(
+                "\"$APP_PATH/Contents/Info.plist\""
+            )
+        )
     }
 
     func testEntitlementsDeclareCameraAccessForHardenedRuntime() throws {

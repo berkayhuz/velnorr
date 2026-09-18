@@ -183,15 +183,6 @@
 "Caps Lock, redesigned" = "Caps Lock, redesigned";
 "Velnorr gives Caps Lock its own subtle indicator so your HUD stays clean and familiar." = "Velnorr gives Caps Lock its own subtle indicator so your HUD stays clean and familiar.";
 "One-time setup" = "إعداد لمرة واحدة";
-"Velnorr needs two macOS permissions to capture system media keys and replace the native volume and brightness HUDs." = "يحتاج Velnorr إلى إذنين من macOS لالتقاط مفاتيح الوسائط واستبدال HUD الأصلي لمستوى الصوت والسطوع.";
-"Input Monitoring" = "مراقبة الإدخال";
-"Required to receive and handle system media key events." = "مطلوب لاستقبال أحداث مفاتيح الوسائط في النظام ومعالجتها.";
-"Required to listen for volume and brightness key events." = "مطلوب للاستماع إلى أحداث مفاتيح مستوى الصوت والسطوع.";
-"Open Accessibility Settings" = "فتح إعدادات تسهيلات الاستخدام";
-"Open Input Monitoring Settings" = "فتح إعدادات مراقبة الإدخال";
-"Permission granted" = "تم منح الإذن";
-"Permission needed" = "الإذن مطلوب";
-"Your permissions are checked automatically when Velnorr starts." = "يتم التحقق من أذوناتك تلقائيًا عند بدء Velnorr.";
 "You can change these permissions later in System Settings." = "يمكنك تغيير هذه الأذونات لاحقًا من إعدادات النظام.";
 "Finish setup" = "إنهاء الإعداد";
 "Velnorr Setup" = "إعداد Velnorr";
@@ -305,5 +296,15 @@
 "Mirror camera" = "كاميرا المرآة";
 "Camera access is only needed when Mirror is enabled." = "يلزم الوصول إلى الكاميرا فقط عند تمكين المرآة.";
 "No camera was detected; Mirror is optional." = "لم يتم اكتشاف كاميرا؛ المرآة اختيارية.";
-"Velnorr needs Accessibility and Input Monitoring to capture system keys and replace the native volume, brightness, and Caps Lock HUDs. Calendar, Reminders, and Mirror camera access are optional." = "يحتاج Velnorr إلى تسهيلات الاستخدام ومراقبة الإدخال لالتقاط مفاتيح النظام واستبدال مؤشرات الصوت والسطوع وقفل الأحرف الكبيرة الأصلية. الوصول إلى التقويم والتذكيرات وكاميرا المرآة اختياري.";
 "System permissions power the native HUD replacement. Calendar, Reminders, and Mirror camera access are optional and can be enabled here when you want those panels ready." = "تتيح أذونات النظام استبدال المؤشرات الأصلية. الوصول إلى التقويم والتذكيرات وكاميرا المرآة اختياري ويمكن تمكينه هنا عند رغبتك في استخدام هذه اللوحات.";
+
+/* Device Control & Data Access */
+"Velnorr needs two macOS permissions to intercept system keys and replace the native volume, brightness, and Caps Lock HUDs." = "يحتاج Velnorr إلى إذنين في macOS لاعتراض مفاتيح النظام واستبدال مؤشرات HUD الأصلية لمستوى الصوت والسطوع وCaps Lock.";
+"Enable both permissions below so Velnorr can receive system key events and replace the native macOS HUDs." = "فعّل الإذنين أدناه لكي يتمكن Velnorr من استقبال أحداث مفاتيح النظام واستبدال مؤشرات HUD الأصلية في macOS.";
+"Accessibility permission is enabled." = "تم تفعيل إذن تسهيلات الاستخدام.";
+"Required to intercept and suppress native macOS HUD events." = "مطلوب لاعتراض أحداث مؤشرات HUD الأصلية في macOS ومنعها.";
+"Device Control & Data Access" = "التحكم في الجهاز والوصول إلى البيانات";
+"Device Control & Data Access permission is enabled." = "تم تفعيل إذن التحكم في الجهاز والوصول إلى البيانات.";
+"Required for Velnorr to receive volume, brightness, and Caps Lock key events." = "مطلوب لكي يتمكن Velnorr من استقبال أحداث مفاتيح مستوى الصوت والسطوع وCaps Lock.";
+"After enabling Velnorr in System Settings, return to the app. Velnorr will detect the permission automatically." = "بعد تفعيل Velnorr في إعدادات النظام، عُد إلى التطبيق. سيكتشف Velnorr الإذن تلقائيًا.";
+"In System Settings, look under Privacy & Security → Device Control & Data Access and enable Velnorr." = "في إعدادات النظام، انتقل إلى الخصوصية والأمان ← التحكم في الجهاز والوصول إلى البيانات، ثم فعّل Velnorr.";

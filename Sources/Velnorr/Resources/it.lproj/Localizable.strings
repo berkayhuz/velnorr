@@ -183,15 +183,6 @@
 "Caps Lock, redesigned" = "Caps Lock, redesigned";
 "Velnorr gives Caps Lock its own subtle indicator so your HUD stays clean and familiar." = "Velnorr gives Caps Lock its own subtle indicator so your HUD stays clean and familiar.";
 "One-time setup" = "Configurazione iniziale";
-"Velnorr needs two macOS permissions to capture system media keys and replace the native volume and brightness HUDs." = "Velnorr richiede due autorizzazioni di macOS per rilevare i tasti multimediali e sostituire gli HUD nativi di volume e luminosità.";
-"Input Monitoring" = "Monitoraggio input";
-"Required to receive and handle system media key events." = "Necessaria per ricevere e gestire gli eventi dei tasti multimediali di sistema.";
-"Required to listen for volume and brightness key events." = "Necessaria per rilevare gli eventi dei tasti volume e luminosità.";
-"Open Accessibility Settings" = "Apri impostazioni Accessibilità";
-"Open Input Monitoring Settings" = "Apri impostazioni Monitoraggio input";
-"Permission granted" = "Autorizzazione concessa";
-"Permission needed" = "Autorizzazione necessaria";
-"Your permissions are checked automatically when Velnorr starts." = "Velnorr verifica automaticamente le autorizzazioni all’avvio.";
 "You can change these permissions later in System Settings." = "Puoi modificare queste autorizzazioni in seguito nelle Impostazioni di Sistema.";
 "Finish setup" = "Completa configurazione";
 "Velnorr Setup" = "Configurazione di Velnorr";
@@ -305,5 +296,15 @@
 "Mirror camera" = "Fotocamera dello specchio";
 "Camera access is only needed when Mirror is enabled." = "L’accesso alla fotocamera è necessario solo quando Specchio è attivo.";
 "No camera was detected; Mirror is optional." = "Nessuna fotocamera rilevata; Specchio è facoltativo.";
-"Velnorr needs Accessibility and Input Monitoring to capture system keys and replace the native volume, brightness, and Caps Lock HUDs. Calendar, Reminders, and Mirror camera access are optional." = "Velnorr richiede Accessibilità e Monitoraggio input per acquisire i tasti di sistema e sostituire gli indicatori nativi di volume, luminosità e Blocco Maiuscole. L’accesso a Calendario, Promemoria e alla fotocamera di Specchio è facoltativo.";
 "System permissions power the native HUD replacement. Calendar, Reminders, and Mirror camera access are optional and can be enabled here when you want those panels ready." = "Le autorizzazioni di sistema consentono di sostituire gli indicatori nativi. L’accesso a Calendario, Promemoria e alla fotocamera di Specchio è facoltativo e può essere attivato qui quando vuoi usare questi pannelli.";
+
+/* Device Control & Data Access */
+"Velnorr needs two macOS permissions to intercept system keys and replace the native volume, brightness, and Caps Lock HUDs." = "Velnorr richiede due autorizzazioni di macOS per intercettare i tasti di sistema e sostituire gli HUD nativi di volume, luminosità e Blocco maiuscole.";
+"Enable both permissions below so Velnorr can receive system key events and replace the native macOS HUDs." = "Abilita entrambe le autorizzazioni qui sotto affinché Velnorr possa ricevere gli eventi dei tasti di sistema e sostituire gli HUD nativi di macOS.";
+"Accessibility permission is enabled." = "L’autorizzazione Accessibilità è abilitata.";
+"Required to intercept and suppress native macOS HUD events." = "Necessaria per intercettare e sopprimere gli eventi degli HUD nativi di macOS.";
+"Device Control & Data Access" = "Controllo dispositivo e accesso ai dati";
+"Device Control & Data Access permission is enabled." = "L’autorizzazione Controllo dispositivo e accesso ai dati è abilitata.";
+"Required for Velnorr to receive volume, brightness, and Caps Lock key events." = "Necessaria affinché Velnorr possa ricevere gli eventi dei tasti volume, luminosità e Blocco maiuscole.";
+"After enabling Velnorr in System Settings, return to the app. Velnorr will detect the permission automatically." = "Dopo aver abilitato Velnorr in Impostazioni di Sistema, torna all’app. Velnorr rileverà automaticamente l’autorizzazione.";
+"In System Settings, look under Privacy & Security → Device Control & Data Access and enable Velnorr." = "In Impostazioni di Sistema, vai su Privacy e sicurezza → Controllo dispositivo e accesso ai dati e abilita Velnorr.";

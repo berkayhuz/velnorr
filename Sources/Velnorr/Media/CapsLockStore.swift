@@ -54,6 +54,7 @@ final class CapsLockStore: ObservableObject {
 
     let install: @MainActor () -> Bool = { [weak self] in
       guard let self else { return false }
+
       return self.eventTap.start { [weak self] enabled in
         Task { @MainActor [weak self] in
           self?.show(enabled: enabled)
@@ -61,18 +62,27 @@ final class CapsLockStore: ObservableObject {
       }
     }
 
-    guard !install() else { return }
+    guard !install() else {
+      return
+    }
 
     eventTapRetryTask = Task { @MainActor [weak self] in
-      for _ in 0..<30 {
+      while !Task.isCancelled {
         try? await Task.sleep(for: .seconds(1))
-        guard !Task.isCancelled, let self else { return }
+
+        guard !Task.isCancelled else {
+          return
+        }
+
+        guard let self else {
+          return
+        }
+
         if install() {
           self.eventTapRetryTask = nil
           return
         }
       }
-      self?.eventTapRetryTask = nil
     }
   }
 }

@@ -3,12 +3,23 @@ import XCTest
 @testable import Velnorr
 
 final class OnboardingPermissionTests: XCTestCase {
+
   func testPackagedOnboardingDoesNotReuseDevelopmentCompletion() throws {
     let suiteName = "VelnorrTests.Onboarding.\(UUID().uuidString)"
-    let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
-    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let defaults = try XCTUnwrap(
+      UserDefaults(suiteName: suiteName)
+    )
 
-    defaults.set("1.0.0", forKey: AppSettings.onboardingCompletedVersion)
+    defer {
+      defaults.removePersistentDomain(
+        forName: suiteName
+      )
+    }
+
+    defaults.set(
+      "1.0.0",
+      forKey: AppSettings.onboardingCompletedVersion
+    )
 
     XCTAssertTrue(
       AppSettings.shouldShowOnboarding(
@@ -17,6 +28,7 @@ final class OnboardingPermissionTests: XCTestCase {
         isPackagedApplication: true
       )
     )
+
     XCTAssertFalse(
       AppSettings.shouldShowOnboarding(
         userDefaults: defaults,
@@ -28,8 +40,15 @@ final class OnboardingPermissionTests: XCTestCase {
 
   func testPackagedOnboardingCompletionIsVersionAware() throws {
     let suiteName = "VelnorrTests.Onboarding.\(UUID().uuidString)"
-    let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
-    defer { defaults.removePersistentDomain(forName: suiteName) }
+    let defaults = try XCTUnwrap(
+      UserDefaults(suiteName: suiteName)
+    )
+
+    defer {
+      defaults.removePersistentDomain(
+        forName: suiteName
+      )
+    }
 
     AppSettings.markOnboardingCompleted(
       userDefaults: defaults,
@@ -44,6 +63,7 @@ final class OnboardingPermissionTests: XCTestCase {
         isPackagedApplication: true
       )
     )
+
     XCTAssertTrue(
       AppSettings.shouldShowOnboarding(
         userDefaults: defaults,
@@ -53,33 +73,60 @@ final class OnboardingPermissionTests: XCTestCase {
     )
   }
 
-  func testPollingOnlyRunsOnPermissionsPageWhileCorePermissionIsMissing() {
+  func testPollingDoesNotRunOutsidePermissionsPage() {
     XCTAssertFalse(
       OnboardingPermissionPolicy.shouldPoll(
         page: .welcome,
         accessibilityGranted: false,
-        listenEventsGranted: false
+        deviceControlGranted: false
       )
     )
-    XCTAssertTrue(
-      OnboardingPermissionPolicy.shouldPoll(
-        page: .permissions,
-        accessibilityGranted: false,
-        listenEventsGranted: true
-      )
-    )
-    XCTAssertFalse(
-      OnboardingPermissionPolicy.shouldPoll(
-        page: .permissions,
-        accessibilityGranted: true,
-        listenEventsGranted: true
-      )
-    )
+
     XCTAssertFalse(
       OnboardingPermissionPolicy.shouldPoll(
         page: .indicators,
         accessibilityGranted: false,
-        listenEventsGranted: false
+        deviceControlGranted: false
+      )
+    )
+  }
+
+  func testPollingRunsWhenAccessibilityIsMissing() {
+    XCTAssertTrue(
+      OnboardingPermissionPolicy.shouldPoll(
+        page: .permissions,
+        accessibilityGranted: false,
+        deviceControlGranted: true
+      )
+    )
+  }
+
+  func testPollingRunsWhenDeviceControlIsMissing() {
+    XCTAssertTrue(
+      OnboardingPermissionPolicy.shouldPoll(
+        page: .permissions,
+        accessibilityGranted: true,
+        deviceControlGranted: false
+      )
+    )
+  }
+
+  func testPollingRunsWhenBothPermissionsAreMissing() {
+    XCTAssertTrue(
+      OnboardingPermissionPolicy.shouldPoll(
+        page: .permissions,
+        accessibilityGranted: false,
+        deviceControlGranted: false
+      )
+    )
+  }
+
+  func testPollingStopsWhenBothPermissionsAreGranted() {
+    XCTAssertFalse(
+      OnboardingPermissionPolicy.shouldPoll(
+        page: .permissions,
+        accessibilityGranted: true,
+        deviceControlGranted: true
       )
     )
   }
