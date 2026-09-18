@@ -157,7 +157,7 @@ private final class SystemBrightnessEventTap: @unchecked Sendable {
   @MainActor
   func start(onEvent: @escaping (SystemBrightnessEvent) -> Void) -> Bool {
     stop()
-    guard SystemEventTapPermission.isGranted else { return false }
+    guard SystemEventTapPermission.canAttemptActiveTap else { return false }
     handler = onEvent
     guard
       let tap = CGEvent.tapCreate(
@@ -182,6 +182,9 @@ private final class SystemBrightnessEventTap: @unchecked Sendable {
   }
 
   fileprivate func handle(_ event: SystemBrightnessEvent) { handler?(event) }
+  fileprivate func reenableAfterSystemDisable() {
+    if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
+  }
   fileprivate static func parse(_ data1: Int64) -> SystemBrightnessEvent? {
     guard ((data1 >> 8) & 0xFF) == 0x0A else { return nil }
     switch (data1 >> 16) & 0xFFFF {
@@ -196,11 +199,16 @@ private func systemBrightnessEventTapCallback(
   _ proxy: CGEventTapProxy, _ type: CGEventType, _ event: CGEvent,
   _ refcon: UnsafeMutableRawPointer?
 ) -> Unmanaged<CGEvent>? {
-  guard let refcon, type.rawValue == 14, let systemEvent = NSEvent(cgEvent: event),
+  guard let refcon else { return Unmanaged.passUnretained(event) }
+  let tap = Unmanaged<SystemBrightnessEventTap>.fromOpaque(refcon).takeUnretainedValue()
+  if SystemEventTapLifecycle.wasDisabled(type) {
+    tap.reenableAfterSystemDisable()
+    return Unmanaged.passUnretained(event)
+  }
+  guard type.rawValue == 14, let systemEvent = NSEvent(cgEvent: event),
     let brightnessEvent = SystemBrightnessEventTap.parse(Int64(systemEvent.data1))
   else { return Unmanaged.passUnretained(event) }
-  Unmanaged<SystemBrightnessEventTap>.fromOpaque(refcon).takeUnretainedValue().handle(
-    brightnessEvent)
+  tap.handle(brightnessEvent)
   // Consume the event so macOS does not draw its native brightness HUD.
   return nil
 }

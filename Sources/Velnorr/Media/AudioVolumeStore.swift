@@ -297,7 +297,7 @@ private final class SystemVolumeEventTap: @unchecked Sendable {
   @MainActor
   func start(onEvent: @escaping (SystemVolumeEvent) -> Void) -> Bool {
     stop()
-    guard SystemEventTapPermission.isGranted else { return false }
+    guard SystemEventTapPermission.canAttemptActiveTap else { return false }
 
     // `systemDefined` is not exposed by the Swift CoreGraphics overlay on
     // every SDK, but its Quartz event type is stable at raw value 14.
@@ -352,6 +352,10 @@ private final class SystemVolumeEventTap: @unchecked Sendable {
     handler?(event)
   }
 
+  fileprivate func reenableAfterSystemDisable() {
+    if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
+  }
+
   deinit {
     stop()
   }
@@ -367,6 +371,11 @@ private func systemVolumeEventTapCallback(
   let tap = Unmanaged<SystemVolumeEventTap>
     .fromOpaque(refcon)
     .takeUnretainedValue()
+
+  if SystemEventTapLifecycle.wasDisabled(type) {
+    tap.reenableAfterSystemDisable()
+    return Unmanaged.passUnretained(event)
+  }
 
   guard type.rawValue == 14,
     let systemEvent = NSEvent(cgEvent: event),

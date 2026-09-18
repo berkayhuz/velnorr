@@ -1,33 +1,41 @@
+import CoreGraphics
 import XCTest
 
 @testable import Velnorr
 
 final class SystemEventTapPermissionTests: XCTestCase {
-  func testPermissionRequiresAccessibilityAndListenEventAccess() {
+  func testActiveTapCanBeAttemptedThroughEitherAuthorizationPath() {
     XCTAssertTrue(
       SystemEventTapPermissionStatus(
         accessibilityGranted: true,
         listenEventsGranted: true
-      ).isGranted
+      ).canAttemptActiveTap
     )
 
-    XCTAssertFalse(
+    XCTAssertTrue(
       SystemEventTapPermissionStatus(
         accessibilityGranted: false,
         listenEventsGranted: true
-      ).isGranted
+      ).canAttemptActiveTap
     )
-    XCTAssertFalse(
+    XCTAssertTrue(
       SystemEventTapPermissionStatus(
         accessibilityGranted: true,
         listenEventsGranted: false
-      ).isGranted
+      ).canAttemptActiveTap
     )
     XCTAssertFalse(
       SystemEventTapPermissionStatus(
         accessibilityGranted: false,
         listenEventsGranted: false
-      ).isGranted
+      ).canAttemptActiveTap
     )
+  }
+
+  func testEventTapDisableNotificationsRequireReenable() {
+    XCTAssertTrue(SystemEventTapLifecycle.wasDisabled(.tapDisabledByTimeout))
+    XCTAssertTrue(SystemEventTapLifecycle.wasDisabled(.tapDisabledByUserInput))
+    XCTAssertFalse(SystemEventTapLifecycle.wasDisabled(.flagsChanged))
+    XCTAssertFalse(SystemEventTapLifecycle.wasDisabled(.keyDown))
   }
 }
