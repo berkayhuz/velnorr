@@ -146,71 +146,297 @@ final class ScreenBrightnessStore: ObservableObject {
   }
 }
 
-private enum SystemBrightnessEvent: Sendable { case increase, decrease }
+enum SystemBrightnessEvent: Sendable, Equatable {
+  case increase
+  case decrease
+}
 
-private final class SystemBrightnessEventTap: @unchecked Sendable {
+final class SystemBrightnessEventTap: @unchecked Sendable {
+  private static let systemDefinedEventTypeRawValue: UInt32 = 14
+
+  private static let auxControlSubtype: Int16 = 8
+
+  // Some keyboards / newer macOS versions can expose
+  // brightness through normal keyboard events.
+  private static let brightnessUpKeyCode: Int64 = 144
+  private static let brightnessDownKeyCode: Int64 = 145
+
+  // Used to prevent handling the same physical key press twice
+  // when the keyboard emits both NX_SYSDEFINED and normal key events.
+  private static let auxTwinWindow: TimeInterval = 0.5
+  private static let fallbackDelay: TimeInterval = 0.06
+
   private var tap: CFMachPort?
   private var runLoopSource: CFRunLoopSource?
   private var handler: ((SystemBrightnessEvent) -> Void)?
 
+  private var lastAuxTimestamp: TimeInterval = 0
+
   @discardableResult
   @MainActor
-  func start(onEvent: @escaping (SystemBrightnessEvent) -> Void) -> Bool {
+  func start(
+    onEvent: @escaping (SystemBrightnessEvent) -> Void
+  ) -> Bool {
     stop()
+
     guard SystemEventTapPermission.canAttemptActiveTap else { return false }
+
     handler = onEvent
+
+    let mask =
+      CGEventMask(
+        1 << Self.systemDefinedEventTypeRawValue
+      )
+      | CGEventMask(
+        1 << CGEventType.keyDown.rawValue
+      )
+      | CGEventMask(
+        1 << CGEventType.keyUp.rawValue
+      )
+
     guard
       let tap = CGEvent.tapCreate(
-        tap: .cgSessionEventTap, place: .headInsertEventTap, options: .defaultTap,
-        eventsOfInterest: CGEventMask(1 << 14), callback: systemBrightnessEventTapCallback,
-        userInfo: Unmanaged.passUnretained(self).toOpaque()
+        tap: .cgSessionEventTap,
+        place: .headInsertEventTap,
+        options: .defaultTap,
+        eventsOfInterest: mask,
+        callback: systemBrightnessEventTapCallback,
+        userInfo: Unmanaged
+          .passUnretained(self)
+          .toOpaque()
       )
-    else { return false }
+    else {
+      handler = nil
+      return false
+    }
+
     self.tap = tap
-    runLoopSource = CFMachPortCreateRunLoopSource(kCFAllocatorDefault, tap, 0)
-    if let runLoopSource { CFRunLoopAddSource(CFRunLoopGetMain(), runLoopSource, .commonModes) }
-    CGEvent.tapEnable(tap: tap, enable: true)
+
+    runLoopSource = CFMachPortCreateRunLoopSource(
+      kCFAllocatorDefault,
+      tap,
+      0
+    )
+
+    if let runLoopSource {
+      CFRunLoopAddSource(
+        CFRunLoopGetMain(),
+        runLoopSource,
+        .commonModes
+      )
+    }
+
+    CGEvent.tapEnable(
+      tap: tap,
+      enable: true
+    )
+
     return true
   }
 
   func stop() {
-    if let tap { CGEvent.tapEnable(tap: tap, enable: false) }
-    if let runLoopSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), runLoopSource, .commonModes) }
+    if let tap {
+      CGEvent.tapEnable(
+        tap: tap,
+        enable: false
+      )
+    }
+
+    if let runLoopSource {
+      CFRunLoopRemoveSource(
+        CFRunLoopGetMain(),
+        runLoopSource,
+        .commonModes
+      )
+    }
+
     tap = nil
     runLoopSource = nil
     handler = nil
   }
 
-  fileprivate func handle(_ event: SystemBrightnessEvent) { handler?(event) }
-  fileprivate func reenableAfterSystemDisable() {
-    if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
-  }
-  fileprivate static func parse(_ data1: Int64) -> SystemBrightnessEvent? {
-    guard ((data1 >> 8) & 0xFF) == 0x0A else { return nil }
-    switch (data1 >> 16) & 0xFFFF {
-    case 2: return .increase
-    case 3: return .decrease
-    default: return nil
+  fileprivate func handle(
+    type: CGEventType,
+    event: CGEvent
+  ) -> Bool {
+
+    // Event tap macOS tarafından kapatılırsa tekrar aç.
+    if SystemEventTapLifecycle.wasDisabled(type) {
+      if let tap {
+        CGEvent.tapEnable(
+          tap: tap,
+          enable: true
+        )
+      }
+
+      return false
     }
+
+    // Newer keyboards can send brightness as normal key events.
+    if type == .keyDown || type == .keyUp {
+      return handleBrightnessKeyCode(
+        type: type,
+        event: event
+      )
+    }
+
+    // Normal Apple media-key route.
+    guard
+      type.rawValue == Self.systemDefinedEventTypeRawValue,
+      let systemEvent = NSEvent(cgEvent: event),
+      systemEvent.subtype.rawValue
+        == Self.auxControlSubtype,
+      let parsed = Self.parse(
+        Int64(systemEvent.data1)
+      )
+    else {
+      return false
+    }
+
+    lastAuxTimestamp =
+      ProcessInfo.processInfo.systemUptime
+
+    // Sadece keyDown parlaklığı değiştirir.
+    if parsed.isDown {
+      handler?(parsed.event)
+    }
+
+    // keyDown + keyUp ikisini de consume et.
+    return true
+  }
+
+  static func parse(
+    _ data1: Int64
+  ) -> (
+    event: SystemBrightnessEvent,
+    isDown: Bool
+  )? {
+    let keyCode =
+      (data1 >> 16) & 0xFFFF
+
+    let keyState =
+      (data1 >> 8) & 0xFF
+
+    // 0x0A = keyDown
+    // 0x0B = keyUp
+    guard
+      keyState == 0x0A
+        || keyState == 0x0B
+    else {
+      return nil
+    }
+
+    let brightnessEvent: SystemBrightnessEvent
+
+    switch keyCode {
+    case 2:
+      brightnessEvent = .increase
+
+    case 3:
+      brightnessEvent = .decrease
+
+    default:
+      return nil
+    }
+
+    return (
+      event: brightnessEvent,
+      isDown: keyState == 0x0A
+    )
+  }
+
+  private func handleBrightnessKeyCode(
+    type: CGEventType,
+    event: CGEvent
+  ) -> Bool {
+
+    let brightnessEvent: SystemBrightnessEvent
+
+    switch event.getIntegerValueField(
+      .keyboardEventKeycode
+    ) {
+
+    case Self.brightnessUpKeyCode:
+      brightnessEvent = .increase
+
+    case Self.brightnessDownKeyCode:
+      brightnessEvent = .decrease
+
+    default:
+      return false
+    }
+
+    let now =
+      ProcessInfo.processInfo.systemUptime
+
+    // Bazı Apple klavyeleri aynı fiziksel tuş için hem
+    // keycode hem NX_SYSDEFINED gönderebilir.
+    //
+    // AUX event az önce geldiyse bu normal key event
+    // yalnızca consume edilir, ikinci defa parlaklık değiştirilmez.
+    guard
+      now - lastAuxTimestamp
+        > Self.auxTwinWindow
+    else {
+      return true
+    }
+
+    // keyUp sadece consume edilir.
+    guard type == .keyDown else {
+      return true
+    }
+
+    // NX_SYSDEFINED event'in gelip gelmeyeceğini çok kısa bekle.
+    DispatchQueue.main.asyncAfter(
+      deadline: .now() + Self.fallbackDelay
+    ) { [weak self] in
+
+      guard let self else {
+        return
+      }
+
+      // Bu sırada AUX twin geldiyse işlem zaten orada yapıldı.
+      guard self.lastAuxTimestamp < now else {
+        return
+      }
+
+      self.handler?(brightnessEvent)
+    }
+
+    return true
+  }
+
+  deinit {
+    stop()
   }
 }
 
 private func systemBrightnessEventTapCallback(
-  _ proxy: CGEventTapProxy, _ type: CGEventType, _ event: CGEvent,
+  _ proxy: CGEventTapProxy,
+  _ type: CGEventType,
+  _ event: CGEvent,
   _ refcon: UnsafeMutableRawPointer?
 ) -> Unmanaged<CGEvent>? {
-  guard let refcon else { return Unmanaged.passUnretained(event) }
-  let tap = Unmanaged<SystemBrightnessEventTap>.fromOpaque(refcon).takeUnretainedValue()
-  if SystemEventTapLifecycle.wasDisabled(type) {
-    tap.reenableAfterSystemDisable()
+
+  guard let refcon else {
     return Unmanaged.passUnretained(event)
   }
-  guard type.rawValue == 14, let systemEvent = NSEvent(cgEvent: event),
-    let brightnessEvent = SystemBrightnessEventTap.parse(Int64(systemEvent.data1))
-  else { return Unmanaged.passUnretained(event) }
-  tap.handle(brightnessEvent)
-  // Consume the event so macOS does not draw its native brightness HUD.
-  return nil
+
+  let eventTap =
+    Unmanaged<SystemBrightnessEventTap>
+      .fromOpaque(refcon)
+      .takeUnretainedValue()
+
+  if eventTap.handle(
+    type: type,
+    event: event
+  ) {
+    // Velnorr handled it.
+    // Do not let macOS display its native brightness HUD.
+    return nil
+  }
+
+  return Unmanaged.passUnretained(event)
 }
 
 /// DisplayServices is a private macOS API. It is used only to preserve the

@@ -15,6 +15,7 @@ let package = Package(
       exclude: [
         "Resources/Default Hud.png",
         "Resources/Music Panel.png",
+        "Resources/Lock Screen.png",
       ],
       resources: [
         .copy("Resources/Battery.svg"),

@@ -47,7 +47,7 @@ final class OnboardingPermissionTests: XCTestCase {
     XCTAssertTrue(
       AppSettings.shouldShowOnboarding(
         userDefaults: defaults,
-        currentVersion: "1.0.1",
+        currentVersion: "1.0.2",
         isPackagedApplication: true
       )
     )

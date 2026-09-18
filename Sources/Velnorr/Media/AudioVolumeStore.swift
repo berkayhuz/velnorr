@@ -335,26 +335,58 @@ private final class SystemVolumeEventTap: @unchecked Sendable {
     handler = nil
   }
 
-  fileprivate static func parse(_ data1: Int64) -> SystemVolumeEvent? {
-    let keyCode = (data1 >> 16) & 0xFFFF
-    let keyState = (data1 >> 8) & 0xFF
-    guard keyState == 0x0A else { return nil }
+fileprivate static func parse(
+  _ data1: Int64
+) -> (event: SystemVolumeEvent, isDown: Bool)? {
+  let keyCode = (data1 >> 16) & 0xFFFF
+  let keyState = (data1 >> 8) & 0xFF
 
-    switch keyCode {
-    case 0: return .increase
-    case 1: return .decrease
-    case 7: return .mute
-    default: return nil
-    }
+  // 0x0A = keyDown
+  // 0x0B = keyUp
+  guard keyState == 0x0A || keyState == 0x0B else {
+    return nil
   }
+
+  let volumeEvent: SystemVolumeEvent
+
+  switch keyCode {
+  case 0:
+    volumeEvent = .increase
+
+  case 1:
+    volumeEvent = .decrease
+
+  case 7:
+    volumeEvent = .mute
+
+  default:
+    return nil
+  }
+
+  return (
+    event: volumeEvent,
+    isDown: keyState == 0x0A
+  )
+}
 
   fileprivate func handle(_ event: SystemVolumeEvent) {
     handler?(event)
   }
 
-  fileprivate func reenableAfterSystemDisable() {
-    if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
+fileprivate func reenableIfNeeded(for type: CGEventType) -> Bool {
+  guard SystemEventTapLifecycle.wasDisabled(type) else {
+    return false
   }
+
+  if let tap {
+    CGEvent.tapEnable(
+      tap: tap,
+      enable: true
+    )
+  }
+
+  return true
+}
 
   deinit {
     stop()
@@ -367,24 +399,31 @@ private func systemVolumeEventTapCallback(
   _ event: CGEvent,
   _ refcon: UnsafeMutableRawPointer?
 ) -> Unmanaged<CGEvent>? {
-  guard let refcon else { return Unmanaged.passUnretained(event) }
+  guard let refcon else {
+    return Unmanaged.passUnretained(event)
+  }
+
   let tap = Unmanaged<SystemVolumeEventTap>
     .fromOpaque(refcon)
     .takeUnretainedValue()
 
-  if SystemEventTapLifecycle.wasDisabled(type) {
-    tap.reenableAfterSystemDisable()
+  if tap.reenableIfNeeded(for: type) {
     return Unmanaged.passUnretained(event)
   }
 
-  guard type.rawValue == 14,
+  guard
+    type.rawValue == 14,
     let systemEvent = NSEvent(cgEvent: event),
     systemEvent.subtype.rawValue == 8,
-    let volumeEvent = SystemVolumeEventTap.parse(Int64(systemEvent.data1))
+    let parsed = SystemVolumeEventTap.parse(
+      Int64(systemEvent.data1)
+    )
   else {
     return Unmanaged.passUnretained(event)
   }
+  if parsed.isDown {
+    tap.handle(parsed.event)
+  }
 
-  tap.handle(volumeEvent)
   return nil
 }

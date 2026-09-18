@@ -281,7 +281,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   }
 
   private var currentAppVersion: String {
-    Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.1"
+    Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.2"
   }
 
   private var isPackagedApplication: Bool {

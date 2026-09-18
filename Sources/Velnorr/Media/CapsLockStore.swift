@@ -119,18 +119,32 @@ private final class CapsLockEventTap: @unchecked Sendable {
     handler = nil
   }
 
-  fileprivate func handle(type: CGEventType, event: CGEvent) -> Bool {
-    if SystemEventTapLifecycle.wasDisabled(type) {
-      if let tap { CGEvent.tapEnable(tap: tap, enable: true) }
-      return false
+fileprivate func handle(type: CGEventType, event: CGEvent) -> Bool {
+  if SystemEventTapLifecycle.wasDisabled(type) {
+    if let tap {
+      CGEvent.tapEnable(
+        tap: tap,
+        enable: true
+      )
     }
-    guard type == .flagsChanged,
-      event.getIntegerValueField(.keyboardEventKeycode) == Self.capsLockKeyCode
-    else { return false }
 
-    handler?(event.flags.contains(.maskAlphaShift))
-    return true
+    return false
   }
+
+  guard
+    type == .flagsChanged,
+    event.getIntegerValueField(.keyboardEventKeycode)
+      == Self.capsLockKeyCode
+  else {
+    return false
+  }
+
+  handler?(
+    event.flags.contains(.maskAlphaShift)
+  )
+
+  return true
+}
 
   deinit { stop() }
 }
