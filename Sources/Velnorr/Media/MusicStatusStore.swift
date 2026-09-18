@@ -397,7 +397,9 @@ final class MusicStatusStore: ObservableObject {
       object: nil,
       queue: .main
     ) { [weak self] notification in
-      guard let bundleIdentifier = (notification.object as? NSRunningApplication)?.bundleIdentifier
+      guard let bundleIdentifier = WorkspaceApplicationNotification.bundleIdentifier(
+        from: notification
+      )
       else { return }
       Task { @MainActor [weak self] in
         self?.handleApplicationChange(bundleIdentifier: bundleIdentifier, isRunning: true)
@@ -408,7 +410,9 @@ final class MusicStatusStore: ObservableObject {
       object: nil,
       queue: .main
     ) { [weak self] notification in
-      guard let bundleIdentifier = (notification.object as? NSRunningApplication)?.bundleIdentifier
+      guard let bundleIdentifier = WorkspaceApplicationNotification.bundleIdentifier(
+        from: notification
+      )
       else { return }
       Task { @MainActor [weak self] in
         self?.handleApplicationChange(bundleIdentifier: bundleIdentifier, isRunning: false)
@@ -520,5 +524,20 @@ final class MusicStatusStore: ObservableObject {
 
   private func applicationIcon(for source: MusicSource) -> NSImage? {
     providers.first(where: { $0.source == source })?.applicationIcon
+  }
+}
+
+protocol WorkspaceApplicationIdentifying {
+  var bundleIdentifier: String? { get }
+}
+
+extension NSRunningApplication: WorkspaceApplicationIdentifying {}
+
+enum WorkspaceApplicationNotification {
+  static func bundleIdentifier(from notification: Notification) -> String? {
+    // NSWorkspace posts itself as the notification object. The affected
+    // application is carried under applicationUserInfoKey.
+    (notification.userInfo?[NSWorkspace.applicationUserInfoKey]
+      as? any WorkspaceApplicationIdentifying)?.bundleIdentifier
   }
 }

@@ -89,6 +89,36 @@ final class MusicStatusStoreTests: XCTestCase {
     )
   }
 
+  func testWorkspaceApplicationNotificationsReadApplicationFromUserInfo() {
+    for name in [
+      NSWorkspace.didLaunchApplicationNotification,
+      NSWorkspace.didTerminateApplicationNotification,
+    ] {
+      let notification = Notification(
+        name: name,
+        object: TestWorkspaceApplication(bundleIdentifier: "wrong.object.identifier"),
+        userInfo: [
+          NSWorkspace.applicationUserInfoKey:
+            TestWorkspaceApplication(bundleIdentifier: "com.spotify.client")
+        ]
+      )
+
+      XCTAssertEqual(
+        WorkspaceApplicationNotification.bundleIdentifier(from: notification),
+        "com.spotify.client"
+      )
+    }
+  }
+
+  func testWorkspaceApplicationNotificationRejectsMissingApplication() {
+    let notification = Notification(
+      name: NSWorkspace.didTerminateApplicationNotification,
+      object: NSWorkspace.shared
+    )
+
+    XCTAssertNil(WorkspaceApplicationNotification.bundleIdentifier(from: notification))
+  }
+
   private func snapshot(
     title: String,
     isPlaying: Bool,
@@ -104,6 +134,14 @@ final class MusicStatusStoreTests: XCTestCase {
       elapsed: elapsed,
       duration: duration
     )
+  }
+}
+
+private final class TestWorkspaceApplication: NSObject, WorkspaceApplicationIdentifying {
+  let bundleIdentifier: String?
+
+  init(bundleIdentifier: String?) {
+    self.bundleIdentifier = bundleIdentifier
   }
 }
 
