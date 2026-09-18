@@ -52,6 +52,16 @@ When the macOS session is locked, Velnorr keeps the Dynamic Island visible with 
   <img src="./Sources/Velnorr/Resources/Default%20Hud.png" width="900" alt="Velnorr default HUD">
 </p>
 
+<br>
+
+<p align="center">
+  <strong>Lock Screen</strong>
+</p>
+
+<p align="center">
+  <img src="./Sources/Velnorr/Resources/Lock%20Screen.png" width="900" alt="Velnorr Lock Screen">
+</p>
+
 ## Highlights
 
 <table>
